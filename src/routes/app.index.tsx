@@ -527,7 +527,8 @@ function AppHome() {
     : "فريقك جاهز — ابدأ بطلب واحد.";
 
   return (
-    <AppShell title={`أهلًا ${profile?.full_name ?? ""}`} lead={workspace?.name ? `${workspace.name} · ${lead}` : lead}>
+    <AppShell title={`أهلًا ${profile?.full_name ?? ""}`} lead={workspace?.name ? `${workspace.name} · ${lead}` : lead} hideTitle={workplaceSetup?.stage === "complete"}>
+      {workplaceSetup?.stage === "complete" && <header className="workplace mb-3"><h1>أهلًا، {profile?.full_name?.split(" ")[0] || workspace?.name}.</h1><p className="mt-2 text-lg">اختر نقطة البداية لفريقك.</p></header>}
       {broken.length ? (
         <div className="app-system-alert">
           <span className="app-system-alert-label">تنبيه</span>
@@ -542,8 +543,8 @@ function AppHome() {
 
       {workspace && !workplaceSetup ? <NameWorkspace workspace={workspace as never} /> : null}
       {workspace && workplaceSetup?.stage === "complete" ? <WorkplaceFirstTasks setup={workplaceSetup} business={workspace} /> : null}
-      <RequestBox />
-      {workspace ? <ObjectivesCard onboarding={onboarding} tasks={list as never} /> : null}
+      {(!workplaceSetup || started) && <RequestBox />}
+      {workspace && (!workplaceSetup || started) ? <ObjectivesCard onboarding={onboarding} tasks={list as never} /> : null}
       {workspace && !workplaceSetup ? <HireTeamCard onboarding={onboarding} /> : null}
       {workspace && !workplaceSetup ? <LearnedPanel onboarding={onboarding} /> : null}
       {workspace && !workplaceSetup ? (
@@ -562,7 +563,7 @@ function AppHome() {
         </div>
       ) : !started && !workplaceSetup ? (
         <FirstRun workspace={(workspace as never) ?? null} />
-      ) : (
+      ) : workplaceSetup && !started ? null : (
         <div className="app-command-center space-y-4">
           <CatchUpNote tasks={list as never} />
           {workspace ? <ConnectionHealthBanner workspaceId={workspace.id} /> : null}
