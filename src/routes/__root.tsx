@@ -11,6 +11,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import mockupCss from "../mockup-theme.css?url";
 
 /** لون واجهة المتصفح الرسمي لزياد — المصدر الوحيد لهذا اللون في المشروع. */
 export const BROWSER_THEME = "#137C6F";
@@ -20,7 +21,7 @@ export const BROWSER_THEME = "#137C6F";
  * قناة الشفافية فتظهره أسود معتم؛ لذلك نستخدم أبيض يطابق خلفية الصفحة
  * فيندمج الشريط معها تمامًا ويظهر شفافًا، مع رموز داكنة يختارها النظام.
  */
-export const BROWSER_NAV_THEME = "#F7F2E8";
+export const BROWSER_NAV_THEME = "#FFFFFF";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { RegionProvider } from "@/hooks/use-region";
 import { Button } from "@/components/ui/button";
@@ -113,6 +114,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "stylesheet", href: mockupCss },
       { rel: "icon", href: "/favicon.ico", sizes: "any" },
       { rel: "icon", href: "/favicon-32.png", type: "image/png", sizes: "32x32" },
       { rel: "icon", href: "/icon-192.png", type: "image/png", sizes: "192x192" },
@@ -122,7 +124,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Almarai:wght@300;400;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Almarai:wght@300;400;700;800&display=swap",
       },
     ],
   }),

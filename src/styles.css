@@ -85,34 +85,34 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-sans: "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "IBM Plex Sans Arabic", ui-sans-serif, sans-serif;
+  --font-sans: "Plus Jakarta Sans", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", "IBM Plex Sans Arabic", ui-sans-serif, sans-serif;
   --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
 }
 
 :root {
-  --radius: 1.15rem;
+  --radius: .5rem;
 
   /* Gulf Modern — المصدر الوحيد للألوان. القيم بالـ hex هي المرجع. */
-  --ivory: #f7f2e8;
-  --ivory-2: #efe8d8;
+  --ivory: oklch(1 0 0);
+  --ivory-2: oklch(.97 .003 210);
   --surface: #ffffff;
-  --ink: #0e2a2b;
-  --ink-2: #143a3b;
-  --muted-text: #4f6264;
+  --ink: oklch(.265 .046 220);
+  --ink-2: oklch(.33 .046 220);
+  --muted-text: oklch(.48 .025 235);
   --on-dark-muted: #a9c2be;
-  --emerald: #137c6f;
-  --emerald-ink: #0e6a5e;
-  --emerald-tint: #ddeee9;
+  --emerald: oklch(.49 .084 195);
+  --emerald-ink: oklch(.44 .077 195);
+  --emerald-tint: oklch(.957 .024 185);
   --saffron: #e0a526;
   --saffron-tint: #fbefd0;
-  --cta: #c94a24;
-  --cta-hover: #b03f1c;
-  --coral: #e4572e;
-  --coral-tint: #fbe1d8;
+  --cta: oklch(.61 .193 36);
+  --cta-hover: oklch(.55 .181 36);
+  --coral: oklch(.68 .2 36);
+  --coral-tint: oklch(.95 .035 36);
   --coral-tint-ink: #8f3417;
-  --line: #e2daca;
+  --line: oklch(.925 .006 220);
   --line-dark: rgba(255, 255, 255, 0.14);
   --success: #3fcf8e;
   --danger: oklch(0.577 0.245 27.325);
