@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useLayoutEffect, useState, type R
 import { createPortal } from "react-dom";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Portrait } from "@/components/site/Portrait";
-import { Menu, X, User, LogOut, PanelRightClose, PanelRightOpen, ArrowLeft, MessageCircle, LayoutDashboard, FolderKanban, CheckCircle2, BrainCircuit, Blocks, Gift, MessageSquareText, CircleHelp, PanelLeftClose, PanelLeftOpen, LockKeyhole, Target, Plug } from "lucide-react";
+import { Menu, X, User, LogOut, PanelRightClose, PanelRightOpen, ArrowLeft, MessageCircle, LayoutDashboard, FolderKanban, CheckCircle2, BrainCircuit, Blocks, Gift, MessageSquareText, CircleHelp, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { team } from "@/data/team";
 import { AccountMenu } from "@/components/app/AccountMenu";
@@ -27,20 +27,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { claimReferral } from "@/lib/referral.functions";
 import { employeeSlug } from "@/lib/employee-slugs";
 import { useBrandBrain } from "@/lib/brand-brain-query";
-import { needsWorkplaceSetup, readWorkplace } from "@/lib/workplace-setup";
-
-function WorkplaceNavigation({ locked, onNavigate }: { locked: boolean; onNavigate?: () => void }) {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const destinations = [
-    { to: "/app/setup", label: "إعداد مساحة العمل", icon: CheckCircle2 },
-    { to: "/app", label: "الرئيسية", icon: LayoutDashboard },
-    { to: "/app/chat", label: "محادثات الموظفين", icon: MessageCircle },
-    { to: "/app/setup", label: "الأهداف", icon: Target, step: "objectives" as const },
-    { to: "/app/tasks", label: "المهام", icon: CheckCircle2 },
-    { to: "/app/integrations", label: "الاتصالات", icon: Plug },
-  ] as const;
-  return <div className="workplace-navigation-inner"><Link to="/" dir="ltr" className="workplace-wordmark" aria-label="زياد — الرئيسية">ziad<span>.</span></Link><nav className="workplace-navigation-links" aria-label="التنقل في مساحة العمل">{destinations.map((item, i) => <Link key={item.label} to={locked && i > 0 ? "/app/setup" : item.to} search={"step" in item ? { step: item.step } : {}} onClick={onNavigate} className={cn("workplace-navigation-link", (pathname === item.to && i !== 3) && "is-current")} aria-current={pathname === item.to && i !== 3 ? "page" : undefined}><item.icon /><span>{item.label}</span>{locked && i > 0 && <LockKeyhole className="navigation-lock" />}</Link>)}</nav></div>;
-}
+import { needsWorkplaceSetup } from "@/lib/workplace-setup";
 
 function ReferralClaimer() {
   const claim = useServerFn(claimReferral);
@@ -365,10 +352,6 @@ export function AppShell({
 }
 
 function AppShellFrame({ title, lead, actions, children, padded, compactTitle, hideTitle }: ShellOptions & { children: ReactNode }) {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const { data: workspace } = useWorkspace();
-  const workplaceMode = pathname === "/app/setup" || (pathname === "/app" && Boolean(readWorkplace(workspace?.profile)));
-  const workplaceLocked = Boolean(workspace && needsWorkplaceSetup(workspace.profile, workspace.created_at));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobilePane, setMobilePane] = useState<"navigation" | "employees">("navigation");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -395,7 +378,6 @@ function AppShellFrame({ title, lead, actions, children, padded, compactTitle, h
     <div
       className={cn(
         "app-shell sahl-app-theme flex min-h-screen bg-background",
-        workplaceMode && "is-workplace-shell",
         embedded && "is-embedded",
         compactTitle && "is-chat-shell",
         sidebarCollapsed && "is-sidebar-collapsed",
@@ -408,15 +390,14 @@ function AppShellFrame({ title, lead, actions, children, padded, compactTitle, h
         <i />
         <i />
       </div>
-      {workplaceMode && !embedded && <aside className="workplace-navigation sticky top-0 hidden h-screen shrink-0 border-e border-border bg-card md:block"><WorkplaceNavigation locked={workplaceLocked} /></aside>}
-      <aside aria-label="التنقل الرئيسي" className={cn("app-primary-rail sticky top-0 hidden h-screen shrink-0 self-start overflow-y-auto border-e border-border bg-card md:block", (embedded || workplaceMode) && "md:hidden")}>
+      <aside aria-label="التنقل الرئيسي" className={cn("app-primary-rail sticky top-0 hidden h-screen shrink-0 self-start overflow-y-auto border-e border-border bg-card md:block", embedded && "md:hidden")}>
         <PrimaryNavigation expanded={railExpanded} onToggle={toggleRail} onNavigate={(chats) => { if (chats) { setSidebarCollapsed(false); try { localStorage.setItem("sahl-sidebar-collapsed", "false"); } catch { /* Keep navigation usable. */ } } }} />
       </aside>
       <aside
         className={cn(
           "sticky top-0 hidden h-screen shrink-0 self-start overflow-hidden border-e border-border bg-card transition-[width] duration-200 md:block",
           sidebarCollapsed ? "w-16" : "w-64",
-          (embedded || workplaceMode) && "md:hidden",
+          embedded && "md:hidden",
         )}
         id="app-desktop-sidebar"
         aria-label="القائمة الجانبية"
@@ -432,7 +413,7 @@ function AppShellFrame({ title, lead, actions, children, padded, compactTitle, h
             onClick={() => setMobileOpen(false)}
           />
            <div className="absolute inset-y-0 start-0 flex w-[min(19rem,86vw)] flex-col overflow-y-auto bg-card shadow-2xl">
-             {workplaceMode ? <WorkplaceNavigation locked={workplaceLocked} onNavigate={() => setMobileOpen(false)} /> : mobilePane === "navigation" ? <PrimaryNavigation expanded mobile onNavigate={(chats) => { if (chats) setMobilePane("employees"); else setMobileOpen(false); }} /> : <>
+             {mobilePane === "navigation" ? <PrimaryNavigation expanded mobile onNavigate={(chats) => { if (chats) setMobilePane("employees"); else setMobileOpen(false); }} /> : <>
                <Button type="button" variant="ghost" onClick={() => setMobilePane("navigation")} className="mx-3 mt-3 justify-start gap-2"><ArrowLeft className="size-4 rotate-180" /> التنقل الرئيسي</Button>
                <div className="min-h-[34rem] flex-1"><SidebarBody onNavigate={() => setMobileOpen(false)} /></div>
              </>}
@@ -467,7 +448,6 @@ function AppShellFrame({ title, lead, actions, children, padded, compactTitle, h
                 compactTitle && "max-sm:w-full max-sm:flex-auto sm:flex-initial",
               )}
             >
-              {workplaceMode && <div className="workplace-header-context"><Button variant="ghost" asChild><Link to="/app/help"><CircleHelp className="size-4" />المساعدة</Link></Button><div><SpaceSwitcher /></div></div>}
               {actions}
               <NotificationBell />
               <UserMenu name={profile?.full_name ?? null} />
