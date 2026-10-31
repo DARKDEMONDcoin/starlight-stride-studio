@@ -5163,6 +5163,10 @@ export type Database = {
         Args: { _payment_reference: string; _reason: string }
         Returns: boolean
       }
+      save_new_workspace_context: {
+        Args: { p_context: Json; p_workspace: string }
+        Returns: undefined
+      }
       save_workplace_setup: {
         Args: {
           p_expected_revision: number
