@@ -9,9 +9,9 @@
 - [x] صفحة التكاملات الموحدة ورابط /chat/siraj (يحوّل للمعرّف الدائم).
 # Roadmap
 ## Approved workplace setup — 31 October
-- [ ] Apply account-first guided setup, industry objective catalog, editable KPIs and custom goals, confirmed employee hiring, essential integrations and completion.
-- [ ] Add contextual first-task review and explicit start; sequential website analysis; preserve existing workspaces.
-- [ ] Run focused tests and desktop/mobile checks; publish via the existing Vercel deployment flow.
+- [x] Apply account-first guided setup, persisted industry objective catalog, editable KPIs/custom goals, confirmed hiring, essential integrations and completion.
+- [x] Add contextual first-task review/explicit start and real started-message status; sequential website analysis; preserve existing workspaces.
+- [x] 16 focused tests passed; latest preview build OK; signed-out boundary and isolated actual goal editor on desktop/390px checked. Vercel READY; getziad.com/app/setup HTTP 200.
 - [ ] Authenticated full save/connect/start/readback: external unmanaged Supabase has no test session available.
 ## Brand Brain — 30 October
 - [x] Implement four sequential persisted stages, bounded public crawl, sources, explicit recovery, partial findings and protected user edits.

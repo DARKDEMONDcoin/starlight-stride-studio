@@ -12,7 +12,7 @@ export function WorkplaceGoals({ owner = "general", templates, goals, onChange, 
   const available = [...templates, ...goals.filter((g) => !templates.some((t) => t.id === g.id)).map((g) => ({ id: g.id, industry: "", title: g.title, hint: "هدف مخصص", unit: g.kpis[0]?.unit ?? "عدد", source: g.kpis[0]?.source ?? "manual" as const }))];
   const update = (goal: WorkplaceGoal) => onChange(goals.map((g) => g.id === goal.id ? goal : g));
   const updateKpi = (goal: WorkplaceGoal, id: string, patch: Partial<WorkplaceKpi>) => update({ ...goal, kpis: goal.kpis.map((k) => k.id === id ? { ...k, ...patch } : k) });
-  return <div className="space-y-3">
+  return <div className="space-y-3 workplace-fields">
     {available.map((t) => {
       const goal = goals.find((g) => g.id === t.id); const expanded = Boolean(goal && open === t.id);
       return <article key={t.id} className={cn("workplace-goal", goal && "is-selected")}>

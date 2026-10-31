@@ -20,3 +20,4 @@
 .workplace-summary > section + section { border-inline-start: 1px solid var(--border); padding-inline-start: 24px; }
 @media(max-width: 1050px) { .workplace-grid { grid-template-columns: minmax(0,1fr); gap: 24px; } .workplace-aside { border-inline-start: 0; border-top: 1px solid var(--border); padding: 20px 0 0; } }
 @media(max-width: 640px) { .workplace h1 { font-size: 1.5rem; } .workplace-summary { grid-template-columns: minmax(0,1fr); } .workplace-summary > section + section { border-inline-start: 0; border-top: 1px solid var(--border); padding: 20px 0 0; } .workplace-footer > button { width: 100%; } .workplace-row { gap: 12px; } }
+.workplace-fields input:not([type="checkbox"]) { border-radius: 6px; background: var(--card); box-shadow: none; height: 40px; }
