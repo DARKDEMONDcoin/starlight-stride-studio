@@ -8,6 +8,11 @@
 - [x] المراحل ٣–٦ وأجزاء من ٧ (التقويم، الكوكيز، صورة الشات، رابط الأسعار الهادئ).
 - [x] صفحة التكاملات الموحدة ورابط /chat/siraj (يحوّل للمعرّف الدائم).
 # Roadmap
+## Approved workplace setup — 31 October
+- [ ] Apply account-first guided setup, industry objective catalog, editable KPIs and custom goals, confirmed employee hiring, essential integrations and completion.
+- [ ] Add contextual first-task review and explicit start; sequential website analysis; preserve existing workspaces.
+- [ ] Run focused tests and desktop/mobile checks; publish via the existing Vercel deployment flow.
+- [ ] Authenticated full save/connect/start/readback: external unmanaged Supabase has no test session available.
 ## Brand Brain — 30 October
 - [x] Implement four sequential persisted stages, bounded public crawl, sources, explicit recovery, partial findings and protected user edits.
 - [x] Add Arabic RTL Brand Brain editor, palette/contrast/preview, serialized autosave/undo, per-field suggestions and manual entry/logo upload extraction.
