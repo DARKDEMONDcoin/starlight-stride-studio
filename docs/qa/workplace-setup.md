@@ -11,12 +11,12 @@ Industry suggestions are literal seeded rows in an authenticated read-only catal
 - Actual objective editor exercised in an isolated browser harness: select goal, change target, add KPI, add custom goal; desktop and 390px checked without horizontal overflow. This is not authenticated flow verification. The harness itself required matching Vite React module versions; its host page error fallback was unrelated to the editor.
 - Deployment uploaded 1148 files, Vercel returned READY; production /app/setup responds 200.
 
-## Unverified / external dependencies
 ## Approved visual correction — 31 October
 - Replaced inherited cream tokens with white, deep blue-green text, teal states and coral actions. English uses Plus Jakarta Sans; Arabic uses IBM Plex Sans Arabic. Generated mockups do not contain verifiable font metadata, so this is an implemented visual match, not a claim of identical source fonts.
 - Setup and the first dashboard use a single text-and-icon sidebar, compact top bar, separated business/selection summary, expandable KPI rows, employee objective dialog, essential tool rows, three-column completion and first-task rows with a team sidebar.
 - Browser checked public welcome/auth and all actual setup views using isolated query-cache sample data at 1440×1000, plus objectives/auth at 390×844. No horizontal overflow or page errors. The hiring dialog was captured after animation; its confirm controls remain accessible while scrolling.
 - 16 existing setup/objective tests passed. Temporary visual harness removed; latest preview build OK. Authenticated saved-data/provider execution remains unverified, not simulated as a successful account flow.
+- Vercel publishing attempt failed during file upload with 429 api-upload-free (daily 5000-file limit exhausted). Reset reported as 1 November 2026 02:43 UTC; no new production deployment was created.
 
 ## Unverified / external dependencies
 - External unmanaged Supabase provides no managed test session. Full authenticated save/resume, live OAuth account connections, Let's GO and chat output readback were not exercised end-to-end. Do not claim them verified.

@@ -9,9 +9,10 @@
 - [x] صفحة التكاملات الموحدة ورابط /chat/siraj (يحوّل للمعرّف الدائم).
 # Roadmap
 ## Match approved desktop mockups — 31 October
-- [ ] Replace inherited cream styling with approved white/teal/coral typography and palette.
-- [ ] Match onboarding, setup navigation, objectives, hiring, integrations, completion and first-task layouts without changing saved-data rules.
-- [ ] Verify visual screens on desktop/mobile and run existing setup tests; authenticated readback remains unavailable with external unmanaged auth.
+- [x] Replace inherited cream styling with approved white/teal/coral typography and palette.
+- [x] Apply mockup layouts to onboarding, setup navigation, objectives, hiring, integrations, completion and first tasks without changing saved-data rules.
+- [x] Desktop/mobile visual checks with isolated actual screens; 16 setup tests pass and preview build OK. Exact generated-font identity cannot be established; authenticated readback remains unavailable.
+- [ ] Vercel publish: daily file-upload limit exhausted (429); resets 1 November 2026 at 02:43 UTC. Live site remains on the previous deployment.
 ## Approved workplace setup — 31 October
 - [x] Apply account-first guided setup, persisted industry objective catalog, editable KPIs/custom goals, confirmed hiring, essential integrations and completion.
 - [x] Add contextual first-task review/explicit start and real started-message status; sequential website analysis; preserve existing workspaces.
