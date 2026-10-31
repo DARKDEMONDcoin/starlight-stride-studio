@@ -2,7 +2,7 @@ import { z } from "zod";
 import { employeeSetups, generalObjectivesFor, type SavedOnboarding, type SavedObjective } from "./onboarding-objectives";
 
 export const kpiSchema = z.object({ id: z.string().max(80), measure: z.string().trim().min(1).max(120), unit: z.string().trim().min(1).max(60), target: z.string().max(12), review: z.enum(["weekly", "monthly"]), source: z.enum(["ga4", "gsc", "ads", "social", "tasks", "manual"]), baseline: z.null().default(null) });
-export const goalSchema = z.object({ id: z.string().max(80), owner: z.string().max(30), title: z.string().trim().min(1).max(160), businessGoalId: z.string().max(80).optional(), kpis: z.array(kpiSchema).min(1).max(5) });
+export const goalSchema = z.object({ id: z.string().min(1).max(80), owner: z.string().refine((v) => ["general", "sam", "sonny", "eva", "nour", "dana", "adam", "abdullah"].includes(v)), title: z.string().trim().min(1).max(160), businessGoalId: z.string().max(80).optional(), kpis: z.array(kpiSchema).min(1).max(5) });
 export const workplaceSchema = z.object({ version: z.literal(2), revision: z.number().int().nonnegative(), stage: z.enum(["objectives", "employees", "tools", "ready", "complete"]), industry: z.string().max(120), goals: z.array(goalSchema).max(40), employees: z.array(z.string().max(30)).max(7), completedSteps: z.array(z.enum(["objectives", "employees", "tools"])).max(3), completedAt: z.string().optional() });
 export type WorkplaceSetup = z.infer<typeof workplaceSchema>;
 export type WorkplaceGoal = z.infer<typeof goalSchema>;
@@ -11,7 +11,7 @@ export type ObjectiveTemplate = { id: string; industry: string; title: string; h
 
 export function emptyWorkplace(industry = ""): WorkplaceSetup { return { version: 2, revision: 0, stage: "objectives", industry, goals: [], employees: [], completedSteps: [] }; }
 export function readWorkplace(profile: unknown): WorkplaceSetup | null { const result = workplaceSchema.safeParse((profile as { workplaceSetup?: unknown } | null)?.workplaceSetup); return result.success ? result.data : null; }
-export function goalFromTemplate(template: ObjectiveTemplate, owner = "general"): WorkplaceGoal { return { id: template.id, owner, title: template.title, kpis: [{ id: `${template.id}-kpi`, measure: template.title, unit: template.unit, target: "", review: "monthly", source: template.source, baseline: null }] }; }
+export function goalFromTemplate(template: ObjectiveTemplate, owner = "general"): WorkplaceGoal { return goalSchema.parse({ id: template.id, owner, title: template.title, kpis: [{ id: `${template.id}-kpi`, measure: template.title, unit: template.unit, target: "", review: "monthly", source: template.source, baseline: null }] }); }
 export function employeeGoals(id: string): WorkplaceGoal[] { return (employeeSetups[id]?.objectives ?? []).map((o) => goalFromTemplate({ ...o, source: o.source === "tasks" ? "manual" : o.source, industry: "" }, id)); }
 export function validGoal(goal: WorkplaceGoal): boolean { return goal.title.trim().length > 0 && goal.kpis.length > 0 && goal.kpis.every((k) => k.measure.trim() && k.unit.trim() && (!k.target || (Number.isFinite(Number(k.target)) && Number(k.target) > 0))); }
 
@@ -50,7 +50,7 @@ export function suggestedFirstTask(setup: WorkplaceSetup, employeeId: string, bu
   const task = firstTasks[employeeId] ?? firstTasks["eva"]; if (!task) return null;
   const own = setup.goals.filter((g) => g.owner === employeeId); const selectedIds = new Set(own.map((g) => g.businessGoalId).filter(Boolean));
   const general = setup.goals.filter((g) => g.owner === "general" && (!selectedIds.size || selectedIds.has(g.id)));
-  return { ...task, general, own, prompt: `${task.scope}\nالنشاط: ${business.name}؛ القطاع: ${business.industry ?? setup.industry}.\nأهداف النشاط: ${general.map((g) => g.title).join("، ")}.\nأهدافك: ${own.map((g) => g.title).join("، ")}.\nالمخرج المطلوب: ${task.output}. استخدم سياق النشاط المحفوظ وفق إعداد استخدام الموقع. لا تدّعِ بيانات أو تقدمًا غير موثّق. أي نشر أو إرسال أو تعديل خارجي يحتاج موافقة منفصلة.` };
+  return { ...task, general, own, prompt: `[workplace-first-task:${employeeId}]\n${task.scope}\nالنشاط: ${business.name}؛ القطاع: ${business.industry ?? setup.industry}.\nأهداف النشاط: ${general.map((g) => g.title).join("، ")}.\nأهدافك: ${own.map((g) => g.title).join("، ")}.\nالمخرج المطلوب: ${task.output}. استخدم سياق النشاط المحفوظ وفق إعداد استخدام الموقع. لا تدّعِ بيانات أو تقدمًا غير موثّق. أي نشر أو إرسال أو تعديل خارجي يحتاج موافقة منفصلة.` };
 }
 
 export function localObjectiveTemplates(industry: string): ObjectiveTemplate[] { return generalObjectivesFor(industry).map((o) => ({ ...o, industry })); }
