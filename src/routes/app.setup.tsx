@@ -14,7 +14,7 @@ import { ConnectNow } from "@/components/app/ConnectNow";
 import { AppIcon, appLabel } from "@/components/site/AppIcon";
 import { useIntegrations, useWorkspace, useProfile } from "@/lib/data";
 import { objectiveCatalog, saveWorkplaceSetup } from "@/lib/workplace-setup.functions";
-import { canFinish, emptyWorkplace, employeeGoals, readWorkplace, recommendedEmployees, requiredTools, validGoal, type WorkplaceGoal, type WorkplaceSetup } from "@/lib/workplace-setup";
+import { canFinish, emptyWorkplace, employeeGoals, readWorkplace, recommendedEmployees, requiredTools, toolsReady, validGoal, type WorkplaceGoal, type WorkplaceSetup } from "@/lib/workplace-setup";
 import { industryObjectives, type SavedOnboarding } from "@/lib/onboarding-objectives";
 import { onboardingFromWorkplace } from "@/lib/workplace-setup";
 import "@/components/app/workplace-setup.css";
