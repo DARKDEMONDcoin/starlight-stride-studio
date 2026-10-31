@@ -16,7 +16,8 @@ import { AppIcon, appLabel } from "@/components/site/AppIcon";
 import { useIntegrations, useWorkspace } from "@/lib/data";
 import { objectiveCatalog, saveWorkplaceSetup } from "@/lib/workplace-setup.functions";
 import { canFinish, emptyWorkplace, employeeGoals, readWorkplace, recommendedEmployees, requiredTools, validGoal, type WorkplaceGoal, type WorkplaceSetup } from "@/lib/workplace-setup";
-import { generalObjectivesFor, industryObjectives, type SavedOnboarding } from "@/lib/onboarding-objectives";
+import { industryObjectives, type SavedOnboarding } from "@/lib/onboarding-objectives";
+import { onboardingFromWorkplace } from "@/lib/workplace-setup";
 import "@/components/app/workplace-setup.css";
 
 export const Route = createFileRoute("/app/setup")({
@@ -52,7 +53,7 @@ function Setup() {
     window.addEventListener("beforeunload", warn); return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
   const catalog = useQuery({ queryKey: ["objective-catalog", setup?.industry], enabled: Boolean(setup), queryFn: () => loadCatalog({ data: { industry: setup?.industry ?? "" } }), retry: false });
-  if (isLoading) return <p role="status" className="p-8 text-center">جارٍ فتح إعداد مساحة العمل…</p>;
+  if (isLoading || (workspace && !setup)) return <p role="status" className="p-8 text-center">جارٍ فتح إعداد مساحة العمل…</p>;
   if (loadError || !workspace || !setup) return <div className="p-8 text-center"><p role="alert">تعذّر فتح مساحة العمل.</p><Button onClick={() => void qc.invalidateQueries({ queryKey: ["workspace"] })}>أعد المحاولة</Button></div>;
   const general = setup.goals.filter((g) => g.owner === "general");
   const recommendations = recommendedEmployees(general);
@@ -66,7 +67,7 @@ function Setup() {
     if (saving) return; setSaving(true); setError("");
     try {
       const saved = await save({ data: { workspaceId: workspace.id, setup: next } });
-      setSetup(saved); setDirty(false); qc.setQueryData(["workspace"], { ...workspace, industry: saved.industry, profile: { ...(workspace.profile as object ?? {}), workplaceSetup: saved } });
+      setSetup(saved); setDirty(false); qc.setQueryData(["workspace"], { ...workspace, industry: saved.industry, profile: { ...(workspace.profile as object ?? {}), workplaceSetup: saved, onboarding: onboardingFromWorkplace(saved, (workspace.profile as { onboarding?: SavedOnboarding } | null)?.onboarding) } });
       if (destination) setView(destination);
       if (saved.stage === "complete") { await qc.invalidateQueries({ queryKey: ["workspace"] }); void navigate({ to: "/app" }); }
       return true;
