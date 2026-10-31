@@ -222,7 +222,7 @@ export function objectivesPrompt(saved: unknown, employeeId?: string): string {
   if (!Array.isArray(s.objectives)) return "";
   const rel = s.objectives.filter((o) => o && (o.owner === "general" || !employeeId || o.owner === employeeId)).slice(0, 12);
   if (!rel.length) return "";
-  const lines = rel.map((o) => `- ${String(o.title).slice(0, 80)}: ${String(o.target).slice(0, 12)} ${String(o.unit).slice(0, 40)} خلال ${horizonLabel[o.horizon as Horizon] ?? "3 أشهر"}`);
+  const lines = rel.map((o) => `- ${String(o.title).slice(0, 160)}: ${o.target ? `${String(o.target).slice(0, 12)} ${String(o.unit).slice(0, 60)}` : "القيمة المستهدفة معلّقة حتى مراجعة خط الأساس"} خلال ${horizonLabel[o.horizon as Horizon] ?? "3 أشهر"}`);
   const ans = employeeId && s.answers?.[employeeId] ? Object.entries(s.answers[employeeId]!).map(([k, v]) => {
     const q = employeeSetups[employeeId]?.questions.find((x) => x.id === k);
     return q ? `- [${areaLabel[q.area ?? employeeArea[employeeId] ?? "operations"]}] ${q.q} ${String(v).slice(0, 40)}` : "";

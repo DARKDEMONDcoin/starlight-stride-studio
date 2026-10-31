@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ShieldCheck, RefreshCw, Loader2, Search, X } from "lucide-react";
@@ -38,6 +39,10 @@ export const Route = createFileRoute("/app/integrations")({
     meta: [
       { title: "التكاملات | زياد" },
       { name: "description", content: "اربط حسابات علامتك ليعمل فريقك مباشرة عليها." },
+      { property: "og:title", content: "حسابات وأدوات مساحة عملك | زياد" },
+      { property: "og:description", content: "اربط حسابات نشاطك وراجع حالة اتصالها بأمان." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -110,7 +115,7 @@ function IntegrationsPage() {
     const want = params.get("connect");
     if (want) setAutoConnect(want);
     const back = params.get("back");
-    if (back && back.startsWith("/")) setBackTo(back);
+    if (back && back.startsWith("/") && !back.startsWith("//") && !back.includes("\\")) setBackTo(back);
     if (!status && !pd && !want && !back) return;
     if (status === "connected") setGscOpen(true);
     else if (status) setError(gscMessages[status] ?? "تعذّر إكمال ربط Search Console.");
@@ -278,6 +283,7 @@ function IntegrationsPage() {
       title="التكاملات"
       lead={`${connected} حسابًا مرتبطًا · حساب واحد لكل منصة داخل مساحة العمل`}
     >
+      {backTo?.startsWith("/app/setup") && <Button variant="outline" asChild className="mb-5"><Link to="/app/setup" search={{ step: "tools" }}>العودة إلى إعداد مساحة العمل</Link></Button>}
       {wpOpen && workspace ? (
         <WordPressConnect workspaceId={workspace.id} onClose={() => setWpOpen(false)} />
       ) : null}
