@@ -8,6 +8,10 @@
 - [x] المراحل ٣–٦ وأجزاء من ٧ (التقويم، الكوكيز، صورة الشات، رابط الأسعار الهادئ).
 - [x] صفحة التكاملات الموحدة ورابط /chat/siraj (يحوّل للمعرّف الدائم).
 # Roadmap
+## Match approved desktop mockups — 31 October
+- [ ] Replace inherited cream styling with approved white/teal/coral typography and palette.
+- [ ] Match onboarding, setup navigation, objectives, hiring, integrations, completion and first-task layouts without changing saved-data rules.
+- [ ] Verify visual screens on desktop/mobile and run existing setup tests; authenticated readback remains unavailable with external unmanaged auth.
 ## Approved workplace setup — 31 October
 - [x] Apply account-first guided setup, persisted industry objective catalog, editable KPIs/custom goals, confirmed hiring, essential integrations and completion.
 - [x] Add contextual first-task review/explicit start and real started-message status; sequential website analysis; preserve existing workspaces.
