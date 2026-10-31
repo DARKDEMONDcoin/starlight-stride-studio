@@ -8,6 +8,9 @@
 - [x] المراحل ٣–٦ وأجزاء من ٧ (التقويم، الكوكيز، صورة الشات، رابط الأسعار الهادئ).
 - [x] صفحة التكاملات الموحدة ورابط /chat/siraj (يحوّل للمعرّف الدائم).
 # Roadmap
+## Complete onboarding audit — 31 October
+- [ ] Check public entry and signed-in boundary in the running preview; inspect completion blockers and run existing setup tests.
+- [ ] Document reproduced issues separately from suspected issues and authentication-limited checks.
 ## Match approved desktop mockups — 31 October
 - [x] Replace inherited cream styling with approved white/teal/coral typography and palette.
 - [x] Apply mockup layouts to onboarding, setup navigation, objectives, hiring, integrations, completion and first tasks without changing saved-data rules.
