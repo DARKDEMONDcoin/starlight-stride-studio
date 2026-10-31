@@ -51,17 +51,17 @@ describe("public employee content", () => {
     }
   });
 
-  it("keeps the newest guide structurally complete while its content is shorter", () => {
+  it("keeps Abdullah's guide on par with the other employees", () => {
     const member = team.find((m) => m.id === "abdullah");
     if (!member) throw new Error("abdullah must stay in the public roster");
     const guide = member.guide;
     expect(guide.introduction).toHaveLength(2);
-    expect(guide.responsibilities.length).toBeGreaterThanOrEqual(3);
+    expect(guide.responsibilities).toHaveLength(6);
     expect(guide.preparation).toHaveLength(3);
-    expect(guide.deliverables).toHaveLength(2);
+    expect(guide.deliverables.length).toBeGreaterThanOrEqual(2);
     expect(guide.review).toHaveLength(4);
     expect(guide.boundaries).toHaveLength(4);
-    expect(guide.tools.length).toBeGreaterThan(0);
+    expect(guide.tools.length).toBeGreaterThanOrEqual(2);
     for (const responsibility of guide.responsibilities) {
       expect(responsibility.description.length).toBeGreaterThan(100);
       expect(responsibility.input.length).toBeGreaterThan(15);
