@@ -1,5 +1,7 @@
 # Workplace setup — 31 October 2026
 
+Latest completion audit: [31 October audit](./onboarding-completion-audit-2026-10-31.md). Signed-in completion remains unverified; advertising-objective readiness was reproduced as blocked in the rule layer, and catalog/integration failure risks are documented separately.
+
 Implemented the approved account-first setup home, business goals with multiple editable KPIs and custom goals, recommended/all employees, goal selection before confirmed hire, required/optional tools, saved completion summary, Let's GO, dashboard suggestions and employee task review with explicit start.
 
 Industry suggestions are literal seeded rows in an authenticated read-only catalog. Setup uses an owner-scoped atomic revision RPC; profile field merging preserves Brand Brain and existing context. New-workspace gating does not retroactively require setup for established workspaces. Selected employee goals mirror into the existing objectivesPrompt path; missing targets and baselines remain unknown. Task starts use the existing chat submission/stream and approval boundary. Dashboard started status reads real user messages tagged for the first task, not speculative progress.

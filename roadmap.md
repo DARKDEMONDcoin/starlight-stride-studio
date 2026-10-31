@@ -9,8 +9,9 @@
 - [x] صفحة التكاملات الموحدة ورابط /chat/siraj (يحوّل للمعرّف الدائم).
 # Roadmap
 ## Complete onboarding audit — 31 October
-- [ ] Check public entry and signed-in boundary in the running preview; inspect completion blockers and run existing setup tests.
-- [ ] Document reproduced issues separately from suspected issues and authentication-limited checks.
+- [x] Public introduction through signup, validation/recovery and signed-out boundary checked; 16 existing tests pass. Advertising objective completion block reproduced in real rules.
+- [x] Document blockers, conditional service-failure risks and test limits in docs/qa/onboarding-completion-audit-2026-10-31.md; no application/database changes.
+- [ ] Complete signed-in save/resume/connect/Let's GO/dashboard/task readback: blocked by external unmanaged authentication without a managed test session.
 ## Match approved desktop mockups — 31 October
 - [x] Replace inherited cream styling with approved white/teal/coral typography and palette.
 - [x] Apply mockup layouts to onboarding, setup navigation, objectives, hiring, integrations, completion and first tasks without changing saved-data rules.
