@@ -15,4 +15,5 @@ describe("approved workplace setup rules", () => {
   it("does not use aggregate task counts as evidence for employee KPIs", () => { expect(employeeGoals("sam").find((g) => g.id === "leads")?.kpis[0]?.source).toBe("manual"); });
   it("rejects nonpositive explicit KPI targets", () => { expect(validGoal({ ...goal, kpis: goal.kpis.map((k) => ({ ...k, target: "0" })) })).toBe(false); expect(validGoal(goal)).toBe(true); });
   it("advertising remains blocked without verified provider connectivity", () => { const own = employeeGoals("abdullah")[0]; if (!own) throw new Error("Missing advertising goal"); expect(toolsReady({ ...emptyWorkplace(), goals: [goal, own] }, [{ provider: "ads", status: "connected" }])).toBe(false); });
+  it("lets users finish setup without connecting tools (skip)", () => { const own = employeeGoals("abdullah")[0]; if (!own) throw new Error("Missing advertising goal"); expect(canFinish({ ...emptyWorkplace(), goals: [goal, own], employees: ["abdullah"], completedSteps: ["objectives", "employees"] }, [])).toBe(true); });
 });
