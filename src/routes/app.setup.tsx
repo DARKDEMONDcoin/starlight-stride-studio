@@ -1,151 +1,91 @@
-import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, Check, Target } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, LockKeyhole, Target, Users, Plug, RefreshCw } from "lucide-react";
+import { z } from "zod";
 import { team } from "@/data/team";
 import { Portrait } from "@/components/site/Portrait";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { useWorkspace } from "@/lib/data";
-import { employeeSlug } from "@/lib/employee-slugs";
-import {
-  buildOnboarding, defaultAnswers, setupSkipKey, defaultGeneralFor, employeeSetups, generalObjectivesFor, horizonLabel, mergeEmployeeSetup, setupEmployeeIds, type Horizon, type SavedOnboarding,
-} from "@/lib/onboarding-objectives";
-import { readWelcomeDraft } from "@/lib/welcome-draft";
-import { z } from "zod";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AppShell } from "@/components/app/AppShell";
+import { BrandBrainPanel } from "@/components/app/BrandBrainPanel";
+import { WorkplaceGoals } from "@/components/app/WorkplaceGoals";
+import { ConnectNow } from "@/components/app/ConnectNow";
+import { AppIcon, appLabel } from "@/components/site/AppIcon";
+import { useIntegrations, useWorkspace } from "@/lib/data";
+import { objectiveCatalog, saveWorkplaceSetup } from "@/lib/workplace-setup.functions";
+import { canFinish, emptyWorkplace, employeeGoals, readWorkplace, recommendedEmployees, requiredTools, validGoal, type WorkplaceGoal, type WorkplaceSetup } from "@/lib/workplace-setup";
+import { generalObjectivesFor, industryObjectives, type SavedOnboarding } from "@/lib/onboarding-objectives";
+import "@/components/app/workplace-setup.css";
 
 export const Route = createFileRoute("/app/setup")({
-  head: () => ({ meta: [
-    { title: "حدد أهدافك وجهّز فريقك | زياد" },
-    { name: "description", content: "اختر أهداف مشروعك وأهداف كل موظف بأسئلة قصيرة وإجابات جاهزة." },
-    { property: "og:title", content: "حدد أهدافك وجهّز فريقك | زياد" },
-    { property: "og:description", content: "أهداف يتابعها فريق زياد في لوحة التحكم." },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
-    { name: "robots", content: "noindex" },
-  ] }),
-  validateSearch: z.object({ employee: z.string().max(20).optional() }),
+  head: () => ({ meta: [{ title: "إعداد مساحة العمل والأهداف | زياد" }, { name: "description", content: "حدد أهداف النشاط ومؤشرات الأداء، اختر فريقك واربط أدواته قبل الانطلاق." }, { property: "og:title", content: "إعداد مساحة العمل | زياد" }, { property: "og:description", content: "أهداف واضحة وفريق مناسب وأدوات متصلة لبداية مدروسة." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
+  validateSearch: z.object({ employee: z.string().max(20).optional(), step: z.enum(["home", "objectives", "employees", "tools", "ready"]).optional() }),
   component: Setup,
 });
-
+const steps = [{ id: "objectives", title: "أهداف النشاط", icon: Target }, { id: "employees", title: "فريقك", icon: Users }, { id: "tools", title: "الأدوات الأساسية", icon: Plug }] as const;
 
 function Setup() {
-  const { data: workspace } = useWorkspace();
-  const navigate = useNavigate();
-  const qc = useQueryClient();
-  const { employee: only } = Route.useSearch();
-  const single = only && employeeSetups[only] ? only : undefined;
-  const industry = (workspace as { industry?: string | null } | undefined)?.industry || readWelcomeDraft()?.industry || "";
-  const generalList = useMemo(() => generalObjectivesFor(industry), [industry]);
-  const [step, setStep] = useState(0);
-  const [general, setGeneral] = useState<Record<string, { target: string; horizon: Horizon }>>({});
-  const [seeded, setSeeded] = useState(false);
+  const { data: workspace, isLoading, error: loadError } = useWorkspace();
+  const { data: connections, isLoading: connectionsLoading, error: connectionsError } = useIntegrations(workspace?.id);
+  const qc = useQueryClient(); const navigate = useNavigate();
+  const loadCatalog = useServerFn(objectiveCatalog); const save = useServerFn(saveWorkplaceSetup);
+  const search = Route.useSearch();
+  const [setup, setSetup] = useState<WorkplaceSetup | null>(null);
+  const [view, setView] = useState("home"); const [dirty, setDirty] = useState(false); const [saving, setSaving] = useState(false); const [error, setError] = useState("");
+  const [hire, setHire] = useState<string | null>(null); const [hireGoals, setHireGoals] = useState<WorkplaceGoal[]>([]); const [allEmployees, setAllEmployees] = useState(false);
   useEffect(() => {
-    if (seeded || !workspace) return;
-    setSeeded(true);
-    setGeneral(Object.fromEntries(defaultGeneralFor(industry).map((id) => [id, { target: generalList.find((o) => o.id === id)?.defaultTarget ?? "", horizon: "3m" as Horizon }])));
-  }, [workspace, seeded, industry, generalList]);
-  const [employees, setEmployees] = useState<string[]>(setupEmployeeIds);
-  const [empObj, setEmpObj] = useState<Record<string, string[]>>(() => Object.fromEntries(setupEmployeeIds.map((e) => [e, [employeeSetups[e]!.objectives[0]!.id]])));
-  const [answers, setAnswers] = useState<Record<string, Record<string, string>>>(() => Object.fromEntries(setupEmployeeIds.map((e) => [e, defaultAnswers(e)])));
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const chosen = useMemo(() => single ? [single] : setupEmployeeIds.filter((e) => employees.includes(e)), [employees, single]);
-  const offset = single ? 0 : 2;
-  const total = offset + chosen.length;
-  useEffect(() => { if (step > total - 1) setStep(total - 1); }, [total, step]);
-
-  async function finish() {
-    if (!workspace || saving) return;
-    setSaving(true); setError("");
-    const existing = ((workspace.profile as { onboarding?: SavedOnboarding } | null)?.onboarding) ?? null;
-    const onboarding = single ? mergeEmployeeSetup(existing, single, empObj[single] ?? [], answers[single] ?? {})
-      : buildOnboarding({ industry, general, employees: chosen, employeeObjectives: empObj, answers });
-    const profile = { ...((workspace.profile as Record<string, unknown>) ?? {}), onboarding };
-    const { error: e } = await supabase.from("workspaces").update({ profile: profile as never }).eq("id", workspace.id);
-    setSaving(false);
-    if (e) { setError("تعذّر الحفظ الآن. حاول مرة أخرى."); return; }
-    await qc.invalidateQueries({ queryKey: ["workspace"] });
-    if (single) void navigate({ to: "/app/chat/$id", params: { id: employeeSlug(single) } });
-    else void navigate({ to: "/app" });
-  }
-  function skip() {
-    if (workspace) { try { localStorage.setItem(setupSkipKey(workspace.id), "1"); } catch { /* optional */ } }
-    void navigate({ to: "/app" });
-  }
-  const last = step === total - 1;
-  const empId = step >= offset ? chosen[step - offset] : undefined;
-  const member = empId ? team.find((m) => m.id === empId) : undefined;
-  const setup = empId ? employeeSetups[empId] : undefined;
-
-  return <div className="welcome-stage" dir="rtl">
-    <header className="welcome-header">
-      <span className="font-display text-xl font-black">زياد<span className="text-primary">.</span></span>
-      <span className="welcome-header-note">الخطوة الأولى في لوحة التحكم</span>
-      <Button variant="ghost" size="sm" onClick={skip}>لاحقًا</Button>
-    </header>
-    <main className="welcome-main">
-      <div className="welcome-progress"><div className="flex justify-between text-xs font-bold text-muted-foreground"><span>{!single && step === 0 ? "أهداف مشروعك" : !single && step === 1 ? "فريقك" : `جلسة تعريف ${member?.name ?? ""}`}</span><span dir="ltr">{step + 1} / {total}</span></div><div className="welcome-progress-track" role="progressbar" aria-label="تقدم التهيئة" aria-valuemin={0} aria-valuemax={total} aria-valuenow={step + 1}><span style={{ width: `${((step + 1) / total) * 100}%` }} /></div></div>
-      <div key={step} className="welcome-appear welcome-content">
-        {!single && step === 0 && <section className="welcome-centered">
-          <span className="welcome-eyebrow"><Target className="size-4" /> أهداف عامة</span>
-          <h1 className="welcome-title">ما الذي تريد تحقيقه؟</h1>
-          <p className="welcome-lead">{industry && industry !== "أخرى" ? `أهداف شائعة في ${industry}. ` : ""}اخترنا هدفين شائعين. عدّل الرقم أو المدة إن أردت؛ سنتابعها في لوحة التحكم.</p>
-          <div className="setup-goal-grid">{generalList.map((o) => {
-            const on = general[o.id];
-            return <div key={o.id} className={cn("setup-goal", on && "is-on")}>
-              <button type="button" className="setup-goal-toggle" aria-pressed={Boolean(on)} onClick={() => setGeneral((g) => { const n = { ...g }; if (n[o.id]) delete n[o.id]; else n[o.id] = { target: o.defaultTarget, horizon: "3m" }; return n; })}>
-                <span className="welcome-radio">{on && <Check className="size-3" />}</span>
-                <span className="min-w-0 flex-1 text-start"><strong className="block text-sm">{o.title}</strong><span className="block text-xs text-muted-foreground">{o.hint}</span></span>
-              </button>
-              {on && <div className="setup-goal-fields">
-                <label>الهدف <input dir="ltr" inputMode="numeric" value={on.target} maxLength={8} onChange={(e) => setGeneral((g) => ({ ...g, [o.id]: { ...on, target: e.target.value.replace(/[^\d.]/g, "") } }))} /> <span>{o.unit}</span></label>
-                <label>خلال <select value={on.horizon} onChange={(e) => setGeneral((g) => ({ ...g, [o.id]: { ...on, horizon: e.target.value as Horizon } }))}>{(Object.keys(horizonLabel) as Horizon[]).map((h) => <option key={h} value={h}>{horizonLabel[h]}</option>)}</select></label>
-              </div>}
-            </div>;
-          })}</div>
-        </section>}
-        {!single && step === 1 && <section className="welcome-centered">
-          <span className="welcome-eyebrow">فريقك</span>
-          <h1 className="welcome-title">من يعمل معك من البداية؟</h1>
-          <p className="welcome-lead">الفريق كاملًا مختار. أزل من لا تحتاجه الآن؛ يمكنك إضافته لاحقًا.</p>
-          <div className="mt-4 grid w-full grid-cols-2 gap-3 sm:grid-cols-4">{team.filter((m) => employeeSetups[m.id]).map((m) => {
-            const on = employees.includes(m.id);
-            return <button key={m.id} type="button" aria-pressed={on} onClick={() => setEmployees((l) => on ? l.filter((x) => x !== m.id) : [...l, m.id])} className={cn("setup-member", on && "is-on")}>
-              <Portrait memberId={m.id} name={m.name} className="size-14 rounded-2xl" />
-              <strong className="text-sm">{m.name}</strong><span className="text-xs text-muted-foreground">{m.role}</span>
-              <span className="welcome-radio">{on && <Check className="size-3" />}</span>
-            </button>;
-          })}</div>
-        </section>}
-        {member && setup && empId && <section className="welcome-centered">
-          <div className="flex items-center gap-3"><Portrait memberId={member.id} name={member.name} className="size-14 rounded-2xl" /><div className="text-start"><strong className="block font-display text-lg">{member.name}</strong><span className="text-xs text-muted-foreground">{member.role}</span></div></div>
-          <h1 className="welcome-title mt-3">ما هدفك مع {member.name}؟</h1>
-          <div className="welcome-choices">{setup.objectives.map((o) => {
-            const on = (empObj[empId] ?? []).includes(o.id);
-            return <button key={o.id} type="button" aria-pressed={on} onClick={() => setEmpObj((s) => ({ ...s, [empId]: on ? (s[empId] ?? []).filter((x) => x !== o.id) : [...(s[empId] ?? []), o.id] }))} className={cn("welcome-choice", on && "welcome-choice-active")}>
-              <span className="min-w-0 flex-1 text-start"><strong className="block text-sm">{o.title}</strong><span className="block text-xs font-normal text-muted-foreground">{o.defaultTarget} {o.unit} خلال 3 أشهر</span></span>
-              <span className="welcome-radio">{on && <Check className="size-3" />}</span>
-            </button>;
-          })}</div>
-          <div className="mt-5 w-full space-y-4 text-start">{setup.questions.map((q) => <div key={q.id}>
-            <p className="text-sm font-bold">{q.q}</p>
-            <div className="mt-2 flex flex-wrap gap-2">{q.options.map((opt) => {
-              const on = answers[empId]?.[q.id] === opt;
-              return <button key={opt} type="button" aria-pressed={on} onClick={() => setAnswers((a) => ({ ...a, [empId]: { ...(a[empId] ?? {}), [q.id]: opt } }))} className={cn("setup-chip", on && "is-on")}>{opt}</button>;
-            })}</div>
-          </div>)}</div>
-          <p className="welcome-disclaimer">الإجابات المحددة افتراضية؛ اضغط «التالي» إن كانت مناسبة.</p>
-        </section>}
-        {error && <p className="welcome-error" role="alert">{error}</p>}
-      </div>
-      <footer className="welcome-footer">
-        <Button type="button" variant="ghost" disabled={step === 0} onClick={() => setStep((s) => Math.max(0, s - 1))} className="welcome-back"><ArrowRight /> السابق</Button>
-        {!single && step >= 1 && !last ? <Button type="button" variant="link" onClick={() => void finish()} disabled={saving || !workspace}>احفظ بالإجابات الافتراضية</Button> : <span className="welcome-footer-spacer" />}
-        {last ? <Button type="button" className="welcome-next" disabled={saving || !workspace} onClick={() => void finish()}>{saving ? "جارٍ الحفظ…" : single ? `احفظ وابدأ مع ${member?.name ?? ""}` : "احفظ الأهداف وابدأ"} <ArrowLeft /></Button>
-          : <Button type="button" className="welcome-next" disabled={!single && (step === 0 && !Object.keys(general).length || step === 1 && !chosen.length)} onClick={() => setStep((s) => s + 1)}>التالي <ArrowLeft /></Button>}
-      </footer>
-    </main>
-  </div>;
+    if (!workspace) return;
+    const saved = readWorkplace(workspace.profile);
+    let initial = saved ?? emptyWorkplace(workspace.industry ?? "");
+    const legacy = (workspace.profile as { onboarding?: SavedOnboarding } | null)?.onboarding;
+    if (!saved && legacy) initial = { ...initial, employees: legacy.employees, goals: legacy.objectives.map((o) => ({ id: o.id, owner: o.owner, title: o.title, kpis: [{ id: `${o.id}-kpi`, measure: o.title, unit: o.unit, target: o.target, source: o.source === "tasks" ? "manual" : o.source, review: "monthly", baseline: null }] })), completedSteps: ["objectives", "employees"] };
+    setSetup(initial); setDirty(false);
+    setView(search.step ?? (saved?.stage === "ready" ? "ready" : "home"));
+    if (search.employee && team.some((m) => m.id === search.employee)) { setView("employees"); setHire(search.employee); setHireGoals(initial.goals.filter((g) => g.owner === search.employee)); }
+  }, [workspace?.id]);
+  useEffect(() => { if (search.step) setView(search.step); }, [search.step]);
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn); return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+  const catalog = useQuery({ queryKey: ["objective-catalog", setup?.industry], enabled: Boolean(setup), queryFn: () => loadCatalog({ data: { industry: setup?.industry ?? "" } }), retry: false });
+  if (isLoading) return <p role="status" className="p-8 text-center">جارٍ فتح إعداد مساحة العمل…</p>;
+  if (loadError || !workspace || !setup) return <div className="p-8 text-center"><p role="alert">تعذّر فتح مساحة العمل.</p><Button onClick={() => void qc.invalidateQueries({ queryKey: ["workspace"] })}>أعد المحاولة</Button></div>;
+  const general = setup.goals.filter((g) => g.owner === "general");
+  const recommendations = recommendedEmployees(general);
+  const members = allEmployees ? team : team.filter((m) => recommendations.some((r) => r.id === m.id) || setup.employees.includes(m.id));
+  const requirements = requiredTools(setup);
+  const ready = !connectionsLoading && !connectionsError && canFinish(setup, connections ?? []);
+  const progress = setup.completedSteps.length;
+  const change = (next: WorkplaceSetup) => { setSetup(next); setDirty(true); setError(""); };
+  const setGeneral = (goals: WorkplaceGoal[]) => change({ ...setup, goals: [...setup.goals.filter((g) => g.owner !== "general"), ...goals], completedSteps: setup.completedSteps.filter((s) => s !== "tools"), stage: "objectives" });
+  const persist = async (next: WorkplaceSetup, destination?: string) => {
+    if (saving) return; setSaving(true); setError("");
+    try {
+      const saved = await save({ data: { workspaceId: workspace.id, setup: next } });
+      setSetup(saved); setDirty(false); qc.setQueryData(["workspace"], { ...workspace, industry: saved.industry, profile: { ...(workspace.profile as object ?? {}), workplaceSetup: saved } });
+      if (destination) setView(destination);
+      if (saved.stage === "complete") { await qc.invalidateQueries({ queryKey: ["workspace"] }); void navigate({ to: "/app" }); }
+      return true;
+    } catch (e) { setError(e instanceof Error ? e.message : "تعذّر الحفظ؛ أعد المحاولة."); return false; }
+    finally { setSaving(false); }
+  };
+  const navigateView = (next: string) => { if (dirty) { void persist(setup, next); } else setView(next); };
+  const startHire = (id: string) => { setHire(id); const existing = setup.goals.filter((g) => g.owner === id); setHireGoals(existing.length ? structuredClone(existing) : []); };
+  const member = team.find((m) => m.id === hire);
+  return <AppShell title="إعداد مساحة العمل" hideTitle><div className="workplace" dir="rtl">
+    <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-6"><div><p className="mb-2 flex items-center gap-2 text-xs font-bold text-primary"><CheckCircle2 className="size-4" />{view === "ready" ? "اكتمل الإعداد" : "حسابك جاهز"}</p><h1>{view === "home" ? "جهّز مساحة عملك" : view === "objectives" ? "حدد أهداف نشاطك" : view === "employees" ? "اختر فريقك وحدد أهدافه" : view === "tools" ? "اربط أدوات العمل الأساسية" : "مساحة عملك جاهزة للانطلاق"}</h1><p className="mt-2 text-sm text-muted-foreground">{workspace.name} · {setup.industry || "حدد قطاع نشاطك"}</p></div><Button variant="ghost" asChild><Link to="/app/help">المساعدة</Link></Button></header>
+    <div className="py-6"><div className="mb-3 flex justify-between text-xs text-muted-foreground"><span>{progress} من 3 مكتملة</span><span role="status">{saving ? "جارٍ الحفظ…" : dirty ? "تغييرات غير محفوظة" : setup.revision ? "تم حفظ الإعداد" : "ابدأ بأهداف النشاط"}</span></div><progress aria-label="تقدم إعداد مساحة العمل" className="h-1.5 w-full accent-primary" value={progress} max={3} /><ol className="mt-5 grid grid-cols-3 gap-3">{steps.map((s, i) => <li key={s.id} className={`workplace-step ${setup.completedSteps.includes(s.id) ? "is-done" : view === s.id ? "is-active" : ""}`}><span className="workplace-step-number">{setup.completedSteps.includes(s.id) ? <Check className="size-4" /> : i + 1}</span><span className="text-xs font-bold sm:text-sm">{s.title}</span></li>)}</ol></div>
+    {error && <p className="mb-4 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</p>}
+    {view === "home" && <div className="workplace-grid"><section><h2 className="text-xl font-bold">خطواتك قبل بدء العمل</h2>{steps.map((s, i) => { const done = setup.completedSteps.includes(s.id); const locked = i > 0 && !setup.completedSteps.includes(steps[i - 1]?.id ?? "objectives"); return <div className="workplace-row" key={s.id}><span className="workplace-step-number">{done ? <Check className="size-4" /> : i + 1}</span><div className="grow"><h3 className="font-bold">{s.title}</h3><p className="mt-1 text-sm text-muted-foreground">{i === 0 ? "اختر أهداف النشاط ومؤشرات قياسها." : i === 1 ? "اختر الموظفين المناسبين وحدد هدف كل موظف." : "اربط الحسابات المطلوبة للعمل الذي اخترته."}</p></div><Button className={!locked && !done ? "workplace-cta" : ""} variant={done || locked ? "outline" : "default"} disabled={locked || saving} onClick={() => navigateView(s.id)}>{locked ? <LockKeyhole className="size-4" /> : done ? <Check className="size-4" /> : <ArrowLeft className="size-4" />}{locked ? i === 1 ? "بعد الأهداف" : "بعد التوظيف" : done ? "مراجعة" : i === 0 ? "حدد الأهداف" : i === 1 ? "اختر الفريق" : "اربط الأدوات"}</Button></div>; })}</section><aside className="workplace-aside"><h2 className="text-lg font-bold">{workspace.name}</h2><p className="mt-2 text-sm text-muted-foreground">{setup.industry || "القطاع غير محدد"}</p>{workspace.website && workspace.use_website_context !== false && <div className="mt-5"><BrandBrainPanel workspaceId={workspace.id} compact welcomeWebsite={workspace.website} /></div>}<Button className="mt-4" size="sm" variant="ghost" asChild><Link to="/app/brand">مراجعة بيانات النشاط<ArrowLeft className="size-4" /></Link></Button></aside></div>}
+    {view === "objectives" && <div className="workplace-grid"><section><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><h2 className="font-bold">أهداف مناسبة لنشاطك</h2><label className="workplace-label">القطاع<select value={setup.industry} className="workplace-input" onChange={(e) => change({ ...setup, industry: e.target.value })}><option value="">قطاع آخر / عام</option>{Object.keys(industryObjectives).map((i) => <option key={i}>{i}</option>)}{setup.industry && !industryObjectives[setup.industry] && <option>{setup.industry}</option>}</select></label></div>{catalog.isPending ? <p role="status">جارٍ تحميل اقتراحات الأهداف…</p> : catalog.error ? <div role="alert"><p>تعذّر تحميل الاقتراحات.</p><Button variant="outline" onClick={() => void catalog.refetch()}><RefreshCw className="size-4" />أعد المحاولة</Button></div> : <WorkplaceGoals templates={catalog.data ?? []} goals={general} onChange={setGeneral} />}</section><aside className="workplace-aside"><h2 className="font-bold">اختياراتك</h2><p className="mt-1 text-xs text-muted-foreground">{general.length} أهداف للنشاط</p><ul className="mt-4 space-y-5">{general.map((g) => <li key={g.id}><p className="text-sm font-bold">{g.title}</p><ul className="mt-2 space-y-1 text-xs text-muted-foreground">{g.kpis.map((k) => <li key={k.id}>• {k.measure} · {k.target ? `${k.target} ${k.unit}` : "الهدف بعد مراجعة خط الأساس"}</li>)}</ul></li>)}</ul></aside></div>}
+    {view === "employees" && <section className="mt-3"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-bold">الفريق المناسب لأهدافك</h2><div className="flex gap-2"><Button variant={allEmployees ? "ghost" : "outline"} onClick={() => setAllEmployees(false)}>المقترحون</Button><Button variant={allEmployees ? "outline" : "ghost"} onClick={() => setAllEmployees(true)}>كل الموظفين ({team.length})</Button></div></div>{members.map((m) => { const rec = recommendations.find((r) => r.id === m.id); const hired = setup.employees.includes(m.id); return <div className="workplace-row" key={m.id}><Portrait memberId={m.id} name={m.name} className="size-14 shrink-0 rounded-full" /><div className="grow"><h3 className="font-bold">{m.name} {rec && <span className="ms-2 text-xs font-normal text-primary">مقترح</span>}</h3><p className="text-xs text-muted-foreground">{m.role}</p><p className="mt-2 max-w-lg text-sm text-muted-foreground">{rec ? `يدعم: ${rec.goals.map((g) => g.title).join("، ")}` : m.summary}</p>{hired && <p className="mt-2 text-xs text-primary">الأهداف المحفوظة: {setup.goals.filter((g) => g.owner === m.id).map((g) => g.title).join("، ")}</p>}</div><Button variant={hired ? "outline" : "default"} disabled={saving} onClick={() => startHire(m.id)}>{hired ? <Check className="size-4" /> : <Users className="size-4" />}{hired ? "تعديل الأهداف" : `عيّن ${m.name}`}</Button>{hired && <Button variant="ghost" size="sm" disabled={saving} onClick={() => void persist({ ...setup, employees: setup.employees.filter((e) => e !== m.id), goals: setup.goals.filter((g) => g.owner !== m.id), completedSteps: setup.completedSteps.filter((s) => s === "objectives"), stage: "employees" })}>إزالة</Button>}</div>; })}</section>}
+    {view === "tools" && <div className="workplace-grid"><section><div className="flex items-center justify-between gap-3"><h2 className="font-bold">أساسية للعمل الذي اخترته</h2><Button variant="ghost" size="sm" disabled={connectionsLoading} onClick={() => void qc.invalidateQueries({ queryKey: ["integrations", workspace.id] })}><RefreshCw className="size-4" />تحديث الحالة</Button></div>{connectionsError && <p role="alert" className="mt-4 text-destructive">تعذّر قراءة حالة الحسابات؛ أعد المحاولة.</p>}{requirements.length === 0 && <p className="my-6 text-sm text-muted-foreground">أهدافك الحالية تعتمد على التخطيط أو القياس اليدوي، ولا تتطلب ربط حساب خارجي.</p>}{requirements.map((t) => { const connected = t.providers.find((p) => (connections ?? []).some((c) => c.provider === p && c.status === "connected" && (p !== "analytics" || c.account?.startsWith("GA4 · ")))); return <div className="workplace-row" key={t.key}><div className="grow"><h3 className="font-bold">{t.providers.length ? t.providers.map(appLabel).join(" / ") : "بيانات الإعلانات"}</h3><p className="mt-1 text-xs text-muted-foreground">{t.reason}</p></div>{connected ? <span className="flex items-center gap-2 text-sm font-bold text-primary"><CheckCircle2 className="size-4" />متصل</span> : <div className="flex flex-wrap gap-2">{t.providers.map((p) => <ConnectNow key={p} workspaceId={workspace.id} provider={p} size="sm" />)}</div>}</div>; })}<Button variant="link" className="mt-4 px-0" onClick={() => navigateView("objectives")}>لا تستطيع ربط أداة؟ راجع الهدف ومصدر قياسه<ArrowLeft className="size-4" /></Button><details className="mt-6 border-t border-border pt-5"><summary className="cursor-pointer text-sm font-bold">أدوات اختيارية</summary><p className="mt-3 text-xs text-muted-foreground">يمكنك إضافة المزيد من الحسابات دون تغيير متطلبات أهدافك الحالية.</p><Button variant="outline" className="mt-3" asChild><Link to="/app/integrations" search={{ back: "/app/setup?step=tools" }}>استعرض المزيد من التكاملات<Plug className="size-4" /></Link></Button></details></section><aside className="workplace-aside"><h2 className="font-bold">الإعداد المحفوظ</h2><p className="mt-3 text-sm">{general.length} أهداف للنشاط</p><ul className="mt-4 space-y-3">{setup.employees.map((id) => { const m = team.find((x) => x.id === id); return m && <li className="flex items-center gap-2 text-sm" key={id}><Portrait memberId={id} name={m.name} className="size-8 rounded-full" />{m.name}</li>; })}</ul><p className="mt-5 text-xs text-muted-foreground">الربط الملغى أو المتعطل لا يُحسب مكتملًا. اختياراتك السابقة محفوظة.</p></aside></div>}
+    {view === "ready" && <><div className="workplace-summary"><section><h2 className="mb-4 font-bold">أهداف النشاط</h2><ul className="space-y-3 text-sm">{general.map((g) => <li key={g.id}>• {g.title}</li>)}</ul><Button variant="link" className="mt-4 px-0" onClick={() => navigateView("objectives")}>تعديل الأهداف</Button></section><section><h2 className="mb-4 font-bold">فريقك</h2><ul className="space-y-3">{setup.employees.map((id) => { const m = team.find((x) => x.id === id); return m && <li key={id} className="flex items-center gap-3 text-sm"><Portrait memberId={id} name={m.name} className="size-9 rounded-full" /><span>{m.name}<small className="block text-muted-foreground">{m.role}</small></span></li>; })}</ul><Button variant="link" className="mt-4 px-0" onClick={() => navigateView("employees")}>تعديل الفريق</Button></section><section><h2 className="mb-4 font-bold">الأدوات الأساسية</h2>{requirements.length ? requirements.map((t) => { const p = t.providers.find((p) => connections?.some((c) => c.provider === p && c.status === "connected")); return <p key={t.key} className="mb-3 flex items-center gap-2 text-sm">{p && <AppIcon name={p} className="size-5" />}{p ? appLabel(p) : t.reason}{p && <Check className="size-4 text-primary" />}</p>; }) : <p className="text-sm text-muted-foreground">لا تحتاج أهدافك الحالية إلى اتصال خارجي.</p>}<Button variant="link" className="mt-4 px-0" onClick={() => navigateView("tools")}>مراجعة الاتصالات</Button></section></div><Button className="workplace-cta h-12 w-full text-base" disabled={!ready || saving} onClick={() => void persist({ ...setup, stage: "complete" })}>{saving ? "جارٍ الحفظ…" : "Let's GO"}<ArrowLeft className="size-5" /></Button><p className="mt-3 text-center text-xs text-muted-foreground">خطوط أساس مؤشرات الأداء لم تُثبت بعد. المهام المقترحة لا تبدأ تلقائيًا.</p></>}
+    {view !== "ready" && <footer className="workplace-footer"><Button variant="ghost" disabled={saving || view === "home"} onClick={() => navigateView(view === "tools" ? "employees" : view === "employees" ? "objectives" : "home")}><ArrowRight className="size-4" />السابق</Button>{dirty && <Button variant="outline" disabled={saving || setup.goals.some((g) => !validGoal(g))} onClick={() => void persist(setup)}>احفظ التقدم</Button>}{view === "objectives" && <Button className="workplace-cta" disabled={saving || !general.length || general.some((g) => !validGoal(g))} onClick={() => void persist({ ...setup, stage: "employees", completedSteps: [...new Set([...setup.completedSteps.filter((s) => s !== "tools"), "objectives" as const])] }, "employees")}>احفظ الأهداف وتابع<ArrowLeft className="size-4" /></Button>}{view === "employees" && <Button className="workplace-cta" disabled={saving || !setup.employees.length || !setup.completedSteps.includes("objectives")} onClick={() => void persist({ ...setup, stage: "tools", completedSteps: ["objectives", "employees"] }, "tools")}>احفظ الفريق وتابع<ArrowLeft className="size-4" /></Button>}{view === "tools" && <Button className="workplace-cta" disabled={saving || !ready} onClick={() => void persist({ ...setup, stage: "ready", completedSteps: ["objectives", "employees", "tools"] }, "ready")}>أكمل الإعداد<ArrowLeft className="size-4" /></Button>}</footer>}
+    <Dialog open={Boolean(hire && member)} onOpenChange={(open) => { if (!open && !saving) setHire(null); }}><DialogContent className="workplace-dialog" dir="rtl"><DialogTitle className="flex items-center gap-3">{member && <Portrait memberId={member.id} name={member.name} className="size-12 rounded-full" />}حدد أهداف {member?.name}</DialogTitle><DialogDescription>{member?.role} · يرتبط التوظيف بالأهداف التي تحفظها هنا.</DialogDescription>{member && <WorkplaceGoals owner={member.id} templates={employeeGoals(member.id).map((g) => ({ id: g.id, title: g.title, hint: "هدف مقترح لهذا الموظف", industry: "", unit: g.kpis[0]?.unit ?? "عدد", source: g.kpis[0]?.source ?? "manual" }))} goals={hireGoals} businessGoals={general} onChange={setHireGoals} />}<div className="flex flex-wrap justify-between gap-3 border-t border-border pt-4"><Button variant="outline" disabled={saving} onClick={() => setHire(null)}>إلغاء</Button><Button className="workplace-cta" disabled={saving || !hireGoals.length || hireGoals.some((g) => !validGoal(g))} onClick={async () => { if (!member) return; const linked = hireGoals.map((g) => ({ ...g, businessGoalId: g.businessGoalId ?? recommendations.find((r) => r.id === member.id)?.goals[0]?.id ?? general[0]?.id })); if (await persist({ ...setup, stage: "employees", employees: [...new Set([...setup.employees, member.id])], goals: [...setup.goals.filter((g) => g.owner !== member.id), ...linked], completedSteps: setup.completedSteps.filter((s) => s !== "tools") })) setHire(null); }}>{saving ? "جارٍ الحفظ…" : setup.employees.includes(hire ?? "") ? "احفظ الأهداف" : "تأكيد التوظيف"}<Check className="size-4" /></Button></div></DialogContent></Dialog>
+  </div></AppShell>;
 }
