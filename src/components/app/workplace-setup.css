@@ -46,5 +46,9 @@
 .workplace-objective-strip > div { display: flex; gap: 12px; min-width: 160px; }
 .workplace-review { border: 0; border-radius: 0; padding: 24px 0; }
 .workplace-review dl { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.workplace-dialog > div:last-of-type { position: sticky; bottom: -28px; background: var(--card); padding-block: 16px; z-index: 2; }
+.workplace-tools .workplace-row { align-items: flex-start; }
+.workplace-tools .workplace-row button { border-radius: 6px; min-height: 36px; background: var(--card); border: 1px solid var(--border); color: var(--primary); box-shadow: none; }
+.workplace-tools .workplace-row button:hover { background: var(--emerald-tint); }
 @media (max-width: 1200px) { .workplace-task-layout { grid-template-columns: 1fr; } .workplace-team-aside { border-inline-start: 0; padding-inline-start: 0; } .workplace-kpi-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
-@media (max-width: 767px) { .workplace-task-row { grid-template-columns: 64px minmax(0,1fr); } .workplace-task-row > div:nth-child(n+3) { grid-column: 2; } .workplace-step:not(:last-child)::after { display: none; } .workplace-review dl, .workplace-target-grid { grid-template-columns: 1fr; } .workplace-dialog { padding: 20px; } }
+@media (max-width: 767px) { .workplace-task-row { grid-template-columns: 64px minmax(0,1fr); } .workplace-task-row > div:nth-child(n+3) { grid-column: 2; } .workplace-step:not(:last-child)::after { display: none; } .workplace-review dl, .workplace-target-grid { grid-template-columns: 1fr; } .workplace-dialog { padding: 20px; } .workplace-dialog > div:last-of-type { bottom: -20px; } }

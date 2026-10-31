@@ -12,6 +12,13 @@ Industry suggestions are literal seeded rows in an authenticated read-only catal
 - Deployment uploaded 1148 files, Vercel returned READY; production /app/setup responds 200.
 
 ## Unverified / external dependencies
+## Approved visual correction — 31 October
+- Replaced inherited cream tokens with white, deep blue-green text, teal states and coral actions. English uses Plus Jakarta Sans; Arabic uses IBM Plex Sans Arabic. Generated mockups do not contain verifiable font metadata, so this is an implemented visual match, not a claim of identical source fonts.
+- Setup and the first dashboard use a single text-and-icon sidebar, compact top bar, separated business/selection summary, expandable KPI rows, employee objective dialog, essential tool rows, three-column completion and first-task rows with a team sidebar.
+- Browser checked public welcome/auth and all actual setup views using isolated query-cache sample data at 1440×1000, plus objectives/auth at 390×844. No horizontal overflow or page errors. The hiring dialog was captured after animation; its confirm controls remain accessible while scrolling.
+- 16 existing setup/objective tests passed. Temporary visual harness removed; latest preview build OK. Authenticated saved-data/provider execution remains unverified, not simulated as a successful account flow.
+
+## Unverified / external dependencies
 - External unmanaged Supabase provides no managed test session. Full authenticated save/resume, live OAuth account connections, Let's GO and chat output readback were not exercised end-to-end. Do not claim them verified.
 - Advertising connectivity remains held by existing evidence/provider safeguards. Setup does not fabricate ad connections or claim live metric baselines.
 - Existing Supabase warning: leaked-password protection disabled; unrelated to these migrations and unchanged.
