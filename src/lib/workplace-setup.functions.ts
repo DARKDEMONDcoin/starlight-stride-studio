@@ -15,6 +15,7 @@ export const objectiveCatalog = createServerFn({ method: "POST" }).middleware([r
 
 export const saveWorkplaceSetup = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input: unknown) => z.object({ workspaceId: z.string().uuid(), setup: workplaceSchema }).parse(input)).handler(async ({ data, context }) => {
   const setup = data.setup;
+  if (setup.goals.some((g) => g.owner !== "general" && !setup.employees.includes(g.owner)) || new Set(setup.employees).size !== setup.employees.length || new Set(setup.goals.map((g) => `${g.owner}:${g.id}`)).size !== setup.goals.length) throw new Error("راجع ارتباط الأهداف بالموظفين المختارين.");
   if (setup.goals.some((g) => !validGoal(g))) throw new Error("راجع اسم المؤشر ووحدته والقيمة المستهدفة.");
   if (["ready", "complete"].includes(setup.stage)) {
     const { data: integrations, error } = await context.supabase.from("integrations").select("provider,status,account").eq("workspace_id", data.workspaceId);
@@ -23,6 +24,12 @@ export const saveWorkplaceSetup = createServerFn({ method: "POST" }).middleware(
   const { data: saved, error } = await context.supabase.rpc("save_workplace_setup", { p_workspace: data.workspaceId, p_setup: setup as never, p_expected_revision: setup.revision });
   if (error) throw new Error(error.message.includes("another session") ? "تغيّر الإعداد في جلسة أخرى. أعد تحميل الصفحة قبل الحفظ." : "تعذّر حفظ الإعداد. اختياراتك ما زالت هنا؛ أعد المحاولة.");
   return workplaceSchema.parse(saved);
+});
+
+export const workplaceFirstTaskStatus = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input: unknown) => z.object({ workspaceId: z.string().uuid() }).parse(input)).handler(async ({ data, context }) => {
+  const { data: rows, error } = await context.supabase.from("messages").select("employee_id,created_at").eq("workspace_id", data.workspaceId).eq("role", "user").like("body", "[workplace-first-task:%").order("created_at", { ascending: false }).limit(100);
+  if (error) throw new Error("تعذّر قراءة حالة المهام الأولى.");
+  return [...new Set((rows ?? []).map((r) => r.employee_id))];
 });
 
 export const saveNewWorkplaceContext = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input: unknown) => z.object({ workspaceId: z.string().uuid(), welcome: z.object({ website: z.string().max(600).optional(), industry: z.string().max(120).optional(), purpose: z.string().max(40).optional() }) }).parse(input)).handler(async ({ data, context }) => {
