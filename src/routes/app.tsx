@@ -5,6 +5,7 @@ import { GUEST_EMAIL } from "@/lib/guest.functions";
 import { BrandLoader } from "@/components/site/BrandLoader";
 import { LiveWorkspaceSync } from "@/lib/live-sync";
 import { AppShell } from "@/components/app/AppShell";
+import { WorkplaceSetupGate } from "@/components/app/WorkplaceSetupGate";
 
 /** تحقّق الخادم مرة واحدة فقط؛ التنقّل الداخلي يقرأ الجلسة المحلية فورًا (تجربة واتساب). */
 let verifiedUserId: string | null = null;
@@ -55,7 +56,7 @@ export const Route = createFileRoute("/app")({
   component: () => (
     <>
       <LiveWorkspaceSync />
-      <AppShell title="مساحة العمل"><Outlet /></AppShell>
+      <AppShell title="مساحة العمل"><WorkplaceSetupGate><Outlet /></WorkplaceSetupGate></AppShell>
     </>
   ),
 });

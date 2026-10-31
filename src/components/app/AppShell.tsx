@@ -27,6 +27,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { claimReferral } from "@/lib/referral.functions";
 import { employeeSlug } from "@/lib/employee-slugs";
 import { useBrandBrain } from "@/lib/brand-brain-query";
+import { needsWorkplaceSetup } from "@/lib/workplace-setup";
 
 function ReferralClaimer() {
   const claim = useServerFn(claimReferral);
@@ -95,6 +96,7 @@ export function WorkspaceCard() {
 function SidebarBody({ onNavigate, collapsed = false, onToggle }: { onNavigate?: () => void; collapsed?: boolean; onToggle?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: inboxWorkspace } = useWorkspace();
+  const setupRequired = Boolean(inboxWorkspace && needsWorkplaceSetup(inboxWorkspace.profile, inboxWorkspace.created_at));
   const { data: inbox } = useEmployeeInbox(inboxWorkspace?.id);
   // ترتيب واتساب: الأحدث رسالةً أولاً، ومن لم يراسلك بعد يبقى بترتيب الفريق.
   const inboxOrder = [...team].sort((a, b) => {
@@ -130,7 +132,7 @@ function SidebarBody({ onNavigate, collapsed = false, onToggle }: { onNavigate?:
             return (
               <Link
                 key={m.id}
-                to="/app/chat/$id"
+                to={setupRequired ? "/app/setup" : "/app/chat/$id"}
                 params={{ id: employeeSlug(m.id) }}
                 onClick={onNavigate}
                  title={collapsed ? m.name : undefined}
@@ -279,11 +281,12 @@ function PrimaryNavigation({ expanded, onToggle, mobile = false, onNavigate }: {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: workspace } = useWorkspace();
   const { data: brand } = useBrandBrain(workspace?.id);
+  const setupRequired = Boolean(workspace && needsWorkplaceSetup(workspace.profile, workspace.created_at));
   const renderLink = (item: (typeof primaryLinks)[number] | (typeof secondaryLinks)[number]) => {
     const active = item.to === "/app" ? pathname === "/app" : pathname === item.to || pathname.startsWith(`${item.to}/`);
     return <Link
       key={item.to}
-      to={item.to}
+      to={setupRequired && !["/app/integrations", "/app/brand", "/app/help"].includes(item.to) ? "/app/setup" : item.to}
       preload="intent"
       preloadDelay={0}
       activeOptions={{ exact: item.to === "/app" }}
@@ -305,6 +308,7 @@ function PrimaryNavigation({ expanded, onToggle, mobile = false, onNavigate }: {
         </Button>
         {expanded && <span className="min-w-0 flex-1 truncate px-2 text-sm font-black">زياد</span>}
       </div>}
+      <Link to="/app/setup" title="إعداد مساحة العمل" className={cn("flex h-11 items-center gap-3 rounded-md px-3 text-sm font-bold", !expanded && "justify-center px-0", pathname === "/app/setup" && "bg-primary/10 text-primary")}><CheckCircle2 className="size-5 shrink-0" />{expanded && "إعداد مساحة العمل"}</Link>
       <div className="space-y-1">{primaryLinks.map(renderLink)}</div>
       {["queued", "running"].includes(brand?.job?.status ?? "") && <Link to="/app/brand" title="جاري تحليل موقعك" className="flex items-center gap-2 px-3 py-2 text-xs text-primary"><span className="size-2 shrink-0 rounded-full bg-primary" />{expanded && "جاري تحليل موقعك"}</Link>}
       <div className="mt-auto space-y-1 border-t border-border pt-3">{secondaryLinks.map(renderLink)}</div>
