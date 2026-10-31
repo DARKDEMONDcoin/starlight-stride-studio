@@ -94,6 +94,8 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { readWorkplace } from "@/lib/workplace-setup";
+import { WorkplaceTaskReview } from "@/components/app/WorkplaceTaskReview";
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import {
   PromptInput,
@@ -246,8 +248,10 @@ function friendlyChatError(e: unknown, fallback: string): string {
 }
 
 export const Route = createFileRoute("/app/chat/$id")({
-  validateSearch: (s: Record<string, unknown>): { prompt?: string } =>
-    typeof s["prompt"] === "string" && s["prompt"] ? { prompt: s["prompt"].slice(0, 4000) } : {},
+  validateSearch: (s: Record<string, unknown>): { prompt?: string; starter?: boolean } => ({
+    ...(typeof s["prompt"] === "string" && s["prompt"] ? { prompt: s["prompt"].slice(0, 4000) } : {}),
+    ...(s["starter"] === true || s["starter"] === "true" ? { starter: true } : {}),
+  }),
   pendingMs: 60_000,
   beforeLoad: ({ params, search }) => {
     const canonical = employeeSlug(params.id);
@@ -721,7 +725,8 @@ function ChatView({
   const { data: messages } = useMessages(workspace?.id, id, conversationId);
   const { data: tasks } = useTasks(workspace?.id);
   const { data: integrations } = useIntegrations(workspace?.id);
-  const { prompt: prefill } = Route.useSearch();
+  const { prompt: prefill, starter } = Route.useSearch();
+  const workplaceSetup = readWorkplace(workspace?.profile);
   const [draft, setDraft] = useState(prefill ?? "");
   useEffect(() => {
     if (prefill) setDraft(prefill);
@@ -1410,7 +1415,8 @@ function ChatView({
             onScroll={onColumnScroll}
             className="chat-message-column relative mx-auto flex w-full max-w-none flex-1 flex-col px-3 sm:px-6 lg:px-8 xl:px-10"
           >
-            {(messages ?? []).length === 0 && !pending ? (
+            {workplaceSetup?.stage === "complete" && workplaceSetup.employees.includes(id) && (starter || (messages ?? []).length === 0) && workspace ? <WorkplaceTaskReview key={`${workspace.id}-${id}`} setup={workplaceSetup} employeeId={id} business={workspace} busy={sendBusy || !conversationId} onStart={(prompt) => submit(prompt)} /> : null}
+            {(messages ?? []).length === 0 && !pending && !workplaceSetup ? (
               <div className="chat-welcome animate-pop-in">
                 <div className="chat-welcome-portraits" aria-hidden="true">
                   <span className="chat-welcome-avatar is-user">

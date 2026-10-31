@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Link2, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import { AppIcon, appLabel } from "@/components/site/AppIcon";
 import { isPipedreamProvider } from "@/data/pipedream-apps";
@@ -49,7 +50,8 @@ export function ConnectNow({
   const go = async () => {
     setError(null);
     if (DIALOG_PROVIDERS.has(provider) || !isPipedreamProvider(provider) || !workspaceId) {
-      void navigate({ to: "/app/integrations", search: { connect: provider } as never });
+      const back = `${window.location.pathname}${window.location.search}`;
+      void navigate({ to: "/app/integrations", search: { connect: provider, back } as never });
       return;
     }
     setBusy(true);
@@ -76,7 +78,7 @@ export function ConnectNow({
 
   return (
     <span className="inline-flex flex-col gap-1">
-      <button
+      <Button
         type="button"
         onClick={go}
         disabled={busy}
@@ -92,7 +94,7 @@ export function ConnectNow({
         )}
         {label ?? `اربط ${appLabel(provider)}`}
         {!busy ? <Link2 className="size-3.5 opacity-70" /> : null}
-      </button>
+      </Button>
       {error ? <span className="text-[11px] font-bold text-coral">{error}</span> : null}
     </span>
   );

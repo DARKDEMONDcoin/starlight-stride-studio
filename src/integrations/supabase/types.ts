@@ -2796,6 +2796,27 @@ export type Database = {
           },
         ]
       }
+      industry_objective_templates: {
+        Row: {
+          created_at: string
+          industry: string
+          objectives: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          industry: string
+          objectives: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          industry?: string
+          objectives?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       integration_credentials: {
         Row: {
           config: Json
@@ -5141,6 +5162,14 @@ export type Database = {
       reverse_referral_payment: {
         Args: { _payment_reference: string; _reason: string }
         Returns: boolean
+      }
+      save_workplace_setup: {
+        Args: {
+          p_expected_revision: number
+          p_setup: Json
+          p_workspace: string
+        }
+        Returns: Json
       }
       transfer_project_ownership: {
         Args: { _caller: string; _new_owner: string; _workspace_id: string }

@@ -1,0 +1,22 @@
+.workplace { max-width: 1160px; margin-inline: auto; color: var(--foreground); }
+.workplace h1, .workplace h2, .workplace h3 { letter-spacing: 0; }
+.workplace h1 { font-size: 1.9rem; line-height: 1.4; font-weight: 750; }
+.workplace-grid { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 36px; margin-top: 28px; }
+.workplace-aside { border-inline-start: 1px solid var(--border); padding-inline-start: 24px; }
+.workplace-goal { border: 1px solid var(--border); border-radius: 8px; background: var(--card); overflow: hidden; }
+.workplace-goal.is-selected { border-color: var(--primary); }
+.workplace-label { display: grid; min-width: 0; gap: 7px; color: var(--muted-foreground); font-size: .75rem; font-weight: 600; }
+.workplace-input { width: 100%; min-width: 0; height: 40px; background: var(--card); color: var(--foreground); border: 1px solid var(--border); border-radius: 6px; padding: 0 10px; outline-color: var(--ring); }
+.workplace-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-block: 24px; margin-top: 24px; border-top: 1px solid var(--border); }
+.workplace-row { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; border-bottom: 1px solid var(--border); padding-block: 24px; }
+.workplace-row > .grow { flex: 1; min-width: 160px; }
+.workplace-step { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.workplace-step-number { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; background: var(--muted); color: var(--muted-foreground); font-weight: 700; }
+.workplace-step.is-done .workplace-step-number, .workplace-step.is-active .workplace-step-number { background: var(--primary); color: var(--primary-foreground); }
+.workplace-cta { background: var(--cta); color: var(--primary-foreground); border-radius: 6px; }
+.workplace-cta:hover { background: var(--cta-hover); }
+.workplace-dialog { max-width: 680px; max-height: 85dvh; overflow-y: auto; width: calc(100% - 24px); background: var(--card); }
+.workplace-summary { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 24px; padding-block: 28px; }
+.workplace-summary > section + section { border-inline-start: 1px solid var(--border); padding-inline-start: 24px; }
+@media(max-width: 1050px) { .workplace-grid { grid-template-columns: minmax(0,1fr); gap: 24px; } .workplace-aside { border-inline-start: 0; border-top: 1px solid var(--border); padding: 20px 0 0; } }
+@media(max-width: 640px) { .workplace h1 { font-size: 1.5rem; } .workplace-summary { grid-template-columns: minmax(0,1fr); } .workplace-summary > section + section { border-inline-start: 0; border-top: 1px solid var(--border); padding: 20px 0 0; } .workplace-footer > button { width: 100%; } .workplace-row { gap: 12px; } }

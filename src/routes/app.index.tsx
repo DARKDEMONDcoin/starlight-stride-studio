@@ -35,6 +35,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { boundWelcomeUser, clearWelcomeBinding, employeeIdFromName, readWelcomeDraft, type StarterAction, type WelcomeDraftData } from "@/lib/welcome-draft";
 import { fallbackRecommendation } from "@/lib/welcome-recommendation-fallback";
 import { areaLabel, employeeSetups, horizonLabel, learnedByArea, setupSkipKey, type Area, type SavedOnboarding } from "@/lib/onboarding-objectives";
+import { readWorkplace } from "@/lib/workplace-setup";
+import { WorkplaceFirstTasks } from "@/components/app/WorkplaceFirstTasks";
 
 
 export const Route = createFileRoute("/app/")({
@@ -502,6 +504,7 @@ function AppHome() {
   const broken = (integrations ?? []).filter((i) => i.status === "error");
   const started = list.length > 0;
   const onboarding = ((workspace?.profile as { onboarding?: SavedOnboarding } | null)?.onboarding ?? null);
+  const workplaceSetup = readWorkplace(workspace?.profile);
   const navigate = useNavigate();
   useEffect(() => {
     if (!workspace || onboarding || isLoading || started) return;
@@ -537,12 +540,13 @@ function AppHome() {
         </div>
       ) : null}
 
-      {workspace ? <NameWorkspace workspace={workspace as never} /> : null}
+      {workspace && !workplaceSetup ? <NameWorkspace workspace={workspace as never} /> : null}
+      {workspace && workplaceSetup?.stage === "complete" ? <WorkplaceFirstTasks setup={workplaceSetup} business={workspace} /> : null}
       <RequestBox />
       {workspace ? <ObjectivesCard onboarding={onboarding} tasks={list as never} /> : null}
-      {workspace ? <HireTeamCard onboarding={onboarding} /> : null}
-      {workspace ? <LearnedPanel onboarding={onboarding} /> : null}
-      {workspace ? (
+      {workspace && !workplaceSetup ? <HireTeamCard onboarding={onboarding} /> : null}
+      {workspace && !workplaceSetup ? <LearnedPanel onboarding={onboarding} /> : null}
+      {workspace && !workplaceSetup ? (
         <OnboardingChecklist
           workspaceId={workspace.id}
           hasWebsite={Boolean(brand?.job?.stages[0]?.state === "done" || (workspace?.profile && typeof workspace.profile === "object" && "summary" in workspace.profile))}
@@ -556,7 +560,7 @@ function AppHome() {
         <div className="grid min-h-[40vh] place-items-center">
           <BrandLoader size="sm" />
         </div>
-      ) : !started ? (
+      ) : !started && !workplaceSetup ? (
         <FirstRun workspace={(workspace as never) ?? null} />
       ) : (
         <div className="app-command-center space-y-4">
