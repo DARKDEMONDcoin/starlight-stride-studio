@@ -2,7 +2,7 @@ import { z } from "zod";
 import { employeeSetups, generalObjectivesFor, type SavedOnboarding, type SavedObjective } from "./onboarding-objectives";
 
 export const kpiSchema = z.object({ id: z.string().max(80), measure: z.string().trim().min(1).max(120), unit: z.string().trim().min(1).max(60), target: z.string().max(12), review: z.enum(["weekly", "monthly"]), source: z.enum(["ga4", "gsc", "ads", "social", "tasks", "manual"]), baseline: z.null().default(null) });
-export const goalSchema = z.object({ id: z.string().min(1).max(80), owner: z.enum(["general", "sam", "sonny", "eva", "nour", "dana", "adam", "abdullah"]), title: z.string().trim().min(1).max(160), businessGoalId: z.string().max(80).optional(), kpis: z.array(kpiSchema).min(1).max(5) });
+export const goalSchema = z.object({ id: z.string().min(1).max(80), owner: z.string().refine((v) => ["general", "sam", "sonny", "eva", "nour", "dana", "adam", "abdullah"].includes(v)), title: z.string().trim().min(1).max(160), businessGoalId: z.string().max(80).optional(), kpis: z.array(kpiSchema).min(1).max(5) });
 export const workplaceSchema = z.object({ version: z.literal(2), revision: z.number().int().nonnegative(), stage: z.enum(["objectives", "employees", "tools", "ready", "complete"]), industry: z.string().max(120), goals: z.array(goalSchema).max(40), employees: z.array(z.string().max(30)).max(7), completedSteps: z.array(z.enum(["objectives", "employees", "tools"])).max(3), completedAt: z.string().optional() });
 export type WorkplaceSetup = z.infer<typeof workplaceSchema>;
 export type WorkplaceGoal = z.infer<typeof goalSchema>;
