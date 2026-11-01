@@ -1,9 +1,11 @@
 import { getSecrets } from "./secrets.server";
 import { createBrowserSession } from "./browser-session.server";
 import { BrandScanError, brandSameSite, readBrandPublic } from "./brand-scan.server";
+import { robotsAllows } from "./brand-brain";
 
 /** Browser navigation never fetches target resources itself: fulfill through the pinned reader. */
 export async function renderBrandPage(url: string, origin: string): Promise<string> {
+  const robots = (await readBrandPublic(`${origin}/robots.txt`, origin, "text")).body;
   const secrets = await getSecrets(["BROWSERBASE_API_KEY", "BROWSERBASE_PROJECT_ID"] as const);
   const key = secrets.BROWSERBASE_API_KEY, projectId = secrets.BROWSERBASE_PROJECT_ID;
   if (!key || !projectId) throw new BrandScanError("الموقع يحتاج متصفحًا لقراءة محتواه؛ خدمة المتصفح غير متاحة الآن.");
@@ -29,7 +31,7 @@ export async function renderBrandPage(url: string, origin: string): Promise<stri
       const sessionId = attached;
       void (async () => {
         try {
-          if (request.method !== "GET" || !brandSameSite(request.url, origin) || ++reads > 30 || Date.now() >= deadline || !["Document", "Script", "Stylesheet", "XHR", "Fetch"].includes(resourceType)) throw new Error("blocked");
+          if (request.method !== "GET" || !brandSameSite(request.url, origin) || !robotsAllows(robots, new URL(request.url).pathname) || ++reads > 30 || Date.now() >= deadline || !["Document", "Script", "Stylesheet", "XHR", "Fetch"].includes(resourceType)) throw new Error("blocked");
           const kind = resourceType === "Document" ? "html" : resourceType === "Stylesheet" ? "css" : "resource";
           const response = await readBrandPublic(request.url, origin, kind);
           await send("Fetch.fulfillRequest", { requestId, responseCode: 200, responseHeaders: [{ name: "Content-Type", value: response.contentType }, { name: "Access-Control-Allow-Origin", value: origin }], body: Buffer.from(response.body).toString("base64") }, sessionId);
@@ -55,6 +57,7 @@ export async function renderBrandPage(url: string, origin: string): Promise<stri
       await new Promise((resolve) => setTimeout(resolve, 750));
       const result = await send("Runtime.evaluate", { expression: "JSON.stringify({url:location.href,text:document.body?.innerText||'',html:document.documentElement.outerHTML})", returnByValue: true }, attached);
       const page = JSON.parse(result?.result?.value ?? "{}");
+      if (page.url === "about:blank") continue;
       if (!brandSameSite(page.url ?? url, origin)) throw new BrandScanError("إعادة توجيه غير آمنة أو خارج الموقع.");
       if ((page.text?.trim().length ?? 0) >= 100 && typeof page.html === "string") {
         if (Buffer.byteLength(page.html) > 1_048_576) throw new BrandScanError("الصفحة أكبر من حد القراءة الآمنة.");
