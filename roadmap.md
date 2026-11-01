@@ -9,10 +9,11 @@
 - [x] صفحة التكاملات الموحدة ورابط /chat/siraj (يحوّل للمعرّف الدائم).
 # Roadmap
 ## Setup corrections — 1 November
-- [ ] Allow saving and finishing without integrations in both server and database validation.
-- [ ] Hide employee navigation until three steps are saved; show unhired employees dimmed with Hire now.
-- [ ] Persist and display the discovered business name rather than the account holder's name.
-- [ ] Run regression tests and check available preview flows; signed-in checks require an available session.
+- [x] Allow saving and finishing without integrations in both server and database validation; retain KPI and evidence safeguards.
+- [x] Hide employee navigation until three steps are saved; show unhired employees dimmed with Hire now.
+- [x] Persist discovery names in signup/context; guarded correction preserves custom names. Database read confirms no remaining personal-name defaults with available discovery.
+- [x] 24 regression tests pass; preview build OK; browser confirms sign-in boundary and discovery page without runtime errors.
+- [ ] Signed-in save/skip/dashboard/Hire now readback: external unmanaged authentication has no available test session.
 ## Complete onboarding audit — 31 October
 - [x] Public introduction through signup, validation/recovery and signed-out boundary checked; 16 existing tests pass. Advertising objective completion block reproduced in real rules.
 - [x] Document blockers, conditional service-failure risks and test limits in docs/qa/onboarding-completion-audit-2026-10-31.md; no application/database changes.
