@@ -43,7 +43,7 @@
 - Adam reporting reuses /app/reports and inventories workspace connections separately from implemented metric feeds; report totals come from provider aggregate requests with a shared explicit date window. Why: connection labels and top-row sums cannot establish complete business performance.
 - Brand references stay bounded/private and sanitized; why: protect sources.
 - Brand extraction uses safe schemas; competitor-research ranks direct substitutes with literal buyer/offer proof from both sites. Why: precision.
-- Keep gateway keys registered in storage/hosting; research preserves service errors. Why: stale keys broke analysis.
+- Keep AI keys registered; bound HTML separately from CSS/text with pinned DNS and redirects. Why: safe, reliable scans.
 - Webhook/login/OAuth origins default to `SITE_ORIGIN`; Vercel maxDuration set in vite.config. Why: old hosts are dead.
 - Publish via `bun run scripts/deploy-vercel.ts` (uploads every file, then creates the production deployment and waits for READY). Why: GitHub→Vercel sync is broken and the CLI rejects the team-scoped token ("User not found").
 - Read-only employee actions (`src/lib/read-only-actions.ts`) run inside the turn without approval and the reply is rewritten from their real result. Why: reads need no consent and the model invented inbox content.
