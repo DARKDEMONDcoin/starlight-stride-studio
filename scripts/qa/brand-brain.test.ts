@@ -1,6 +1,24 @@
 import { describe, expect, test } from "bun:test";
 import { brandCompleteness, contrastRatio, cssHex, mergeDetected, normalizeBrandUrl, robotsAllows } from "../../src/lib/brand-brain";
 import { employeeId, employeeSlug } from "../../src/lib/employee-slugs";
+import { brandBodyCollector, BrandScanError } from "../../src/lib/brand-scan.server";
+describe("Bounded business website reading", () => {
+  test("accepts a 709310-byte homepage above the former limit", () => {
+    const body = brandBodyCollector("html");
+    body.push(Buffer.alloc(400000, "a")); body.push(Buffer.alloc(309310, "b"));
+    expect(Buffer.byteLength(body.text())).toBe(709310);
+  });
+  test("HTML accepts exactly 1 MiB and rejects the next streamed byte", () => {
+    const body = brandBodyCollector("html"); body.push(Buffer.alloc(1048576));
+    expect(Buffer.byteLength(body.text())).toBe(1048576);
+    expect(() => body.push(Buffer.from("x"))).toThrow(BrandScanError);
+  });
+  for (const kind of ["css", "text"] as const) test(`${kind} retains its 512000-byte boundary`, () => {
+    const body = brandBodyCollector(kind); body.push(Buffer.alloc(512000));
+    expect(Buffer.byteLength(body.text())).toBe(512000);
+    expect(() => body.push(Buffer.from("x"))).toThrow(BrandScanError);
+  });
+});
 describe("Brand Brain rules", () => {
   test("four populated sections yield 100 percent and three yield 75", () => {
     expect(brandCompleteness({ business: { data: { summary: "Business" } }, audience: { data: { segments: ["Customers"] } }, voice: { data: { attributes: ["Warm"] } } })).toBe(75);

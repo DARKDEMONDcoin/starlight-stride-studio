@@ -8,6 +8,10 @@
 - [x] المراحل ٣–٦ وأجزاء من ٧ (التقويم، الكوكيز، صورة الشات، رابط الأسعار الهادئ).
 - [x] صفحة التكاملات الموحدة ورابط /chat/siraj (يحوّل للمعرّف الدائم).
 # Roadmap
+## Business discovery repair — 1 November
+- [x] Fixed the reproduced homepage size-limit failure: HTML has a bounded 1 MiB limit; CSS/text retain 512000 bytes. Public-address pinning, same-site redirects and timeouts unchanged; 12 tests pass.
+- [x] Real f-g.com extraction returned 10 pages; business, audience, voice and identity analyses each returned validated populated results.
+- [ ] Signed-in retry/save/readback: external unmanaged authentication has no available test session. Fix is preview-only until deployment.
 ## Employee reply service — 1 November
 - [x] Replaced the invalid stored gateway configuration with the registered managed configuration; the actual employee reply path returned a nonempty streamed response without changing models or limits. No deployment required for the shared server-side configuration update.
 - [ ] Signed-in chat readback: external unmanaged authentication has no available test session.
