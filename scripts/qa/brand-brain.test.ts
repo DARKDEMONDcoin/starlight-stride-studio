@@ -1,7 +1,29 @@
 import { describe, expect, test } from "bun:test";
 import { brandCompleteness, contrastRatio, cssHex, mergeDetected, normalizeBrandUrl, robotsAllows } from "../../src/lib/brand-brain";
 import { employeeId, employeeSlug } from "../../src/lib/employee-slugs";
-import { brandBodyCollector, BrandScanError } from "../../src/lib/brand-scan.server";
+import { brandBodyCollector, BrandScanError, retryBrandPending } from "../../src/lib/brand-scan.server";
+describe("Target 202 recovery", () => {
+  test("retries a pending response once and returns only the real page", async () => {
+    let calls = 0;
+    const page = await retryBrandPending(async () => { if (++calls === 1) throw new BrandScanError("pending", 202); return "real business page"; }, Date.now() + 12000, async () => {});
+    expect(calls).toBe(2); expect(page).toBe("real business page");
+  });
+  test("persistent 202 remains unavailable after exactly two reads", async () => {
+    let calls = 0;
+    await expect(retryBrandPending(async () => { calls++; throw new BrandScanError("pending", 202); }, Date.now() + 12000, async () => {})).rejects.toMatchObject({ status: 202 });
+    expect(calls).toBe(2);
+  });
+  test("never retries explicit access denial", async () => {
+    let calls = 0;
+    await expect(retryBrandPending(async () => { calls++; throw new BrandScanError("denied", 403); }, Date.now() + 12000, async () => {})).rejects.toMatchObject({ status: 403 });
+    expect(calls).toBe(1);
+  });
+  test("does not retry past the existing read deadline", async () => {
+    let calls = 0;
+    await expect(retryBrandPending(async () => { calls++; throw new BrandScanError("pending", 202); }, Date.now(), async () => {})).rejects.toMatchObject({ status: 202 });
+    expect(calls).toBe(1);
+  });
+});
 describe("Bounded business website reading", () => {
   test("accepts a 709310-byte homepage above the former limit", () => {
     const body = brandBodyCollector("html");

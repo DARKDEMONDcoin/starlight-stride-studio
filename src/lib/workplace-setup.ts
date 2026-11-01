@@ -38,6 +38,10 @@ export function toolsReady(setup: WorkplaceSetup, connections: { provider: strin
 // Tool connections are optional: users may skip integrations and connect later.
 export function canFinish(setup: WorkplaceSetup, _connections: { provider: string; status: string; account?: string | null }[]): boolean { return setup.completedSteps.includes("objectives") && setup.completedSteps.includes("employees") && setup.employees.length > 0 && setup.goals.filter((g) => g.owner === "general").some(validGoal) && setup.employees.every((e) => setup.goals.some((g) => g.owner === e && validGoal(g))); }
 export function needsWorkplaceSetup(profile: unknown, createdAt: string): boolean { const s = readWorkplace(profile); if (s) return s.stage !== "complete"; const legacy = (profile as { onboarding?: SavedOnboarding } | null)?.onboarding; return !legacy && Date.parse(createdAt) >= Date.parse("2026-10-31T00:00:00Z"); }
+/** Setup presentation must not overwrite the owner's saved navigation preferences. */
+export function minimizeSetupNavigation(pathname: string, profile: unknown, createdAt?: string): boolean {
+  return pathname === "/app/setup" || Boolean(createdAt && needsWorkplaceSetup(profile, createdAt));
+}
 export function onboardingFromWorkplace(setup: WorkplaceSetup, previous?: SavedOnboarding | null): SavedOnboarding {
   const objectives: SavedObjective[] = setup.goals.flatMap((g) => g.kpis.map((k) => ({ id: `${g.id}-${k.id}`, owner: g.owner, title: `${g.title} · ${k.measure}`, unit: k.unit, target: k.target, horizon: "3m" as const, source: k.source })));
   return { version: 1, completedAt: setup.completedAt ?? "", objectives, employees: setup.employees, answers: previous?.answers ?? {} };
