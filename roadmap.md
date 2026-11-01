@@ -8,6 +8,11 @@
 - [x] المراحل ٣–٦ وأجزاء من ٧ (التقويم، الكوكيز، صورة الشات، رابط الأسعار الهادئ).
 - [x] صفحة التكاملات الموحدة ورابط /chat/siraj (يحوّل للمعرّف الدائم).
 # Roadmap
+## Browserbase activation and Vercel deployment — 1 November
+- [x] Collect Browserbase credentials securely; verify a real rendered f-g.com read with the new account.
+- [x] Save server-only configuration and encrypted Vercel environment variables; clear the obsolete service pause only after verified session success.
+- [x] Actual app browsePage returns verified Future Group content; 18 browser/brand tests and 10 setup tests pass.
+- [ ] Deploy current project to Vercel and confirm READY/live public routes. Signed-in scan persistence remains unavailable with external unmanaged authentication. Brand Brain retains its safe direct reader; activating Browserbase does not replace its transport.
 ## Setup navigation and website response — 1 November
 - [x] Minimize both rails from route/persisted setup state without changing saved preferences; place non-chat account/notification controls at the physical left edge. Original logo/navigation retained.
 - [x] Identify 202 as a direct target-site response, not AI failure; add one deadline-bounded retry and clear manual-entry recovery, never accept pending HTML as evidence. 26 focused tests pass; local f-g.com collection returns 10 pages.
