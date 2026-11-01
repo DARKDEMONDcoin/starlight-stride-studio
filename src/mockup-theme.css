@@ -7,6 +7,13 @@ html body .app-shell > aside { background: var(--card); }
 html body .app-shell .sahl-smoke { display: none; }
 html body .app-shell header.app-topbar { padding: 0; background: var(--card); border-bottom: 1px solid var(--border); }
 html body .app-shell header.app-topbar .app-topbar-inner { border: 0; border-radius: 0; box-shadow: none; background: var(--card); min-height: 72px; padding: 12px 28px; }
+/* Physical left placement is independent of the content language. */
+html body .app-shell:not(.is-chat-shell) .app-topbar-inner { display: flex; direction: ltr; }
+html body .app-shell:not(.is-chat-shell) .app-account-controls { order: -1; margin-right: auto; }
+html body .app-shell:not(.is-chat-shell) .app-topbar-inner > .min-w-0.flex-1 { direction: rtl; text-align: right; }
+html body .app-shell:not(.is-chat-shell) .app-topbar-controls { direction: rtl; }
+html body .app-shell.is-setup-minimized .app-primary-rail nav > div:first-child > button { display: none; }
+html body .app-shell.is-chat-shell .app-account-controls { pointer-events: auto; }
 html body .app-shell.is-workplace-shell { --workplace-sidebar-width: 220px; }
 html body .is-workplace-shell .workplace-navigation { width: var(--workplace-sidebar-width); }
 .workplace-navigation-inner { display: flex; flex-direction: column; height: 100%; padding: 24px 16px; gap: 24px; }

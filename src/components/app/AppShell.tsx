@@ -27,7 +27,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { claimReferral } from "@/lib/referral.functions";
 import { employeeSlug } from "@/lib/employee-slugs";
 import { useBrandBrain } from "@/lib/brand-brain-query";
-import { needsWorkplaceSetup, employeeNavigation } from "@/lib/workplace-setup";
+import { needsWorkplaceSetup, employeeNavigation, minimizeSetupNavigation } from "@/lib/workplace-setup";
 
 function ReferralClaimer() {
   const claim = useServerFn(claimReferral);
@@ -375,6 +375,11 @@ function AppShellFrame({ title, lead, actions, children, padded, compactTitle, h
     return !current;
   });
   const { data: profile } = useProfile();
+  const { data: workspace } = useWorkspace();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const setupMinimized = minimizeSetupNavigation(pathname, workspace?.profile, workspace?.created_at);
+  const effectiveSidebarCollapsed = setupMinimized || sidebarCollapsed;
+  const effectiveRailExpanded = !setupMinimized && railExpanded;
   const embedded = useRouterState({
     select: (state) =>
       ["1", "true"].includes(String((state.location.search as Record<string, unknown>)["embedded"])),
@@ -386,8 +391,9 @@ function AppShellFrame({ title, lead, actions, children, padded, compactTitle, h
         "app-shell sahl-app-theme flex min-h-screen bg-background",
         embedded && "is-embedded",
         compactTitle && "is-chat-shell",
-        sidebarCollapsed && "is-sidebar-collapsed",
-        railExpanded && "is-rail-expanded",
+        effectiveSidebarCollapsed && "is-sidebar-collapsed",
+        effectiveRailExpanded && "is-rail-expanded",
+        setupMinimized && "is-setup-minimized",
       )}
     >
       <ReferralClaimer />
@@ -397,18 +403,18 @@ function AppShellFrame({ title, lead, actions, children, padded, compactTitle, h
         <i />
       </div>
       <aside aria-label="التنقل الرئيسي" className={cn("app-primary-rail sticky top-0 hidden h-screen shrink-0 self-start overflow-y-auto border-e border-border bg-card md:block", embedded && "md:hidden")}>
-        <PrimaryNavigation expanded={railExpanded} onToggle={toggleRail} onNavigate={(chats) => { if (chats) { setSidebarCollapsed(false); try { localStorage.setItem("sahl-sidebar-collapsed", "false"); } catch { /* Keep navigation usable. */ } } }} />
+        <PrimaryNavigation expanded={effectiveRailExpanded} onToggle={setupMinimized ? undefined : toggleRail} onNavigate={(chats) => { if (chats) { setSidebarCollapsed(false); try { localStorage.setItem("sahl-sidebar-collapsed", "false"); } catch { /* Keep navigation usable. */ } } }} />
       </aside>
       <aside
         className={cn(
           "sticky top-0 hidden h-screen shrink-0 self-start overflow-hidden border-e border-border bg-card transition-[width] duration-200 md:block",
-          sidebarCollapsed ? "w-16" : "w-64",
+          effectiveSidebarCollapsed ? "w-16" : "w-64",
           embedded && "md:hidden",
         )}
         id="app-desktop-sidebar"
         aria-label="القائمة الجانبية"
       >
-        <SidebarBody collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+        <SidebarBody collapsed={effectiveSidebarCollapsed} onToggle={setupMinimized ? undefined : toggleSidebar} />
       </aside>
 
       {mobileOpen ? (
@@ -455,6 +461,8 @@ function AppShellFrame({ title, lead, actions, children, padded, compactTitle, h
               )}
             >
               {actions}
+            </div>
+            <div className="app-account-controls flex shrink-0 items-center gap-1 sm:gap-2">
               <NotificationBell />
               <UserMenu name={profile?.full_name ?? null} />
             </div>
