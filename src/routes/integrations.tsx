@@ -6,6 +6,7 @@ import { PageShell, PageHero, CtaBand } from "@/components/site/PageShell";
 import { Reveal } from "@/components/Reveal";
 import { AppIcon, appLabel } from "@/components/site/AppIcon";
 import { cn } from "@/lib/utils";
+import { searchMatches } from "@/lib/search-match";
 
 export const Route = createFileRoute("/integrations")({
   head: () => ({
@@ -118,9 +119,7 @@ function IntegrationsPage() {
           items: term
             ? g.items.filter(
                 (i) =>
-                  appLabel(i.key).includes(term) ||
-                  i.key.includes(term.toLowerCase()) ||
-                  i.note.includes(term),
+                  searchMatches(term, appLabel(i.key), i.key, i.note),
               )
             : g.items,
         }))

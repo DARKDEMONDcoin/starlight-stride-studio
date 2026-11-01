@@ -1,0 +1,2 @@
+# Website rendering
+- Brand rendering uses Browserbase with all target requests intercepted and fulfilled by the DNS-pinned public reader. Honor robots, block writes/off-site resources/workers/sockets, bound resource count/bytes/time, release sessions. Why: JavaScript evidence without relaxing scanner network safety.

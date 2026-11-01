@@ -11,9 +11,9 @@ export async function renderBrandPage(url: string, origin: string): Promise<stri
   if (!key || !projectId) throw new BrandScanError("الموقع يحتاج متصفحًا لقراءة محتواه؛ خدمة المتصفح غير متاحة الآن.");
   const session = await createBrowserSession(key, { projectId, timeout: 60 });
   const ws = new WebSocket(session.connectUrl);
-  let id = 0, reads = 0;
+  let id = 0, reads = 0, bytes = 0;
   const pending = new Map<number, { resolve: (value: any) => void; reject: (error: Error) => void }>();
-  const deadline = Date.now() + 25_000;
+  const deadline = Date.now() + 35_000;
   const send = (method: string, params: Record<string, unknown> = {}, sessionId?: string) => new Promise<any>((resolve, reject) => {
     const current = ++id;
     pending.set(current, { resolve, reject });
@@ -31,9 +31,11 @@ export async function renderBrandPage(url: string, origin: string): Promise<stri
       const sessionId = attached;
       void (async () => {
         try {
-          if (request.method !== "GET" || !brandSameSite(request.url, origin) || !robotsAllows(robots, new URL(request.url).pathname) || ++reads > 30 || Date.now() >= deadline || !["Document", "Script", "Stylesheet", "XHR", "Fetch"].includes(resourceType)) throw new Error("blocked");
+          if (request.method !== "GET" || !brandSameSite(request.url, origin) || !robotsAllows(robots, new URL(request.url).pathname) || ++reads > 120 || Date.now() >= deadline || !["Document", "Script", "Stylesheet", "XHR", "Fetch"].includes(resourceType)) throw new Error("blocked");
           const kind = resourceType === "Document" ? "html" : resourceType === "Stylesheet" ? "css" : "resource";
           const response = await readBrandPublic(request.url, origin, kind);
+          bytes += Buffer.byteLength(response.body);
+          if (bytes > 12_582_912) throw new Error("bounded read limit");
           await send("Fetch.fulfillRequest", { requestId, responseCode: 200, responseHeaders: [{ name: "Content-Type", value: response.contentType }, { name: "Access-Control-Allow-Origin", value: origin }], body: Buffer.from(response.body).toString("base64") }, sessionId);
         } catch { await send("Fetch.failRequest", { requestId, errorReason: "BlockedByClient" }, sessionId).catch(() => {}); }
       })();
@@ -52,13 +54,14 @@ export async function renderBrandPage(url: string, origin: string): Promise<stri
     await send("Network.setBypassServiceWorker", { bypass: true }, attached);
     await send("Fetch.enable", { patterns: [{ urlPattern: "*", requestStage: "Request" }] }, attached);
     await send("Page.enable", {}, attached);
+    await send("Page.addScriptToEvaluateOnNewDocument", { source: "for(const key of ['Worker','SharedWorker','WebSocket','EventSource'])Object.defineProperty(globalThis,key,{value:class{constructor(){throw new Error('Unavailable during read-only analysis')}},writable:false,configurable:false});" }, attached);
     await send("Page.navigate", { url }, attached);
     while (Date.now() < deadline - 1000) {
       await new Promise((resolve) => setTimeout(resolve, 750));
       const result = await send("Runtime.evaluate", { expression: "JSON.stringify({url:location.href,text:document.body?.innerText||'',html:document.documentElement.outerHTML})", returnByValue: true }, attached);
       const page = JSON.parse(result?.result?.value ?? "{}");
       if (page.url === "about:blank") continue;
-      if (!brandSameSite(page.url ?? url, origin)) throw new BrandScanError("إعادة توجيه غير آمنة أو خارج الموقع.");
+      if (!brandSameSite(page.url ?? url, origin)) { console.warn("Brand rendered navigation rejected", { url: page.url }); throw new BrandScanError("إعادة توجيه غير آمنة أو خارج الموقع."); }
       if ((page.text?.trim().length ?? 0) >= 100 && typeof page.html === "string") {
         if (Buffer.byteLength(page.html) > 1_048_576) throw new BrandScanError("الصفحة أكبر من حد القراءة الآمنة.");
         return page.html;
