@@ -8,6 +8,7 @@ export type StarterAction = { employee: string; text: string };
 export type WelcomeDraftData = {
   purpose?: string;
   website?: string;
+  businessName?: string;
   industry?: string;
   step?: number;
   plan?: { insight?: string; actions: StarterAction[]; firstMove?: string } | null;
@@ -37,6 +38,10 @@ export function writeWelcomeDraft(draft: WelcomeDraftData) {
 
 export function hasWelcomeAnswers(d: WelcomeDraftData | null) {
   return Boolean(d && ((typeof d.website === "string" && d.website.trim()) || (typeof d.industry === "string" && d.industry.trim() && d.industry !== "أخرى")));
+}
+export function signupCompany(draft: WelcomeDraftData | null, fullName: string): string {
+  const name = draft?.website?.trim() && typeof draft.businessName === "string" ? draft.businessName.trim().slice(0, 80) : "";
+  return name.length >= 2 ? name : fullName.trim();
 }
 
 export function bindWelcomeUser(userId: string) {

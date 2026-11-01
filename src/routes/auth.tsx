@@ -1,4 +1,4 @@
-import { bindWelcomeUser, hasWelcomeAnswers, readWelcomeDraft } from "@/lib/welcome-draft";
+import { bindWelcomeUser, hasWelcomeAnswers, readWelcomeDraft, signupCompany } from "@/lib/welcome-draft";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -229,14 +229,14 @@ function AuthPage() {
               email: email.trim(),
               password,
               fullName: fullName.trim(),
-              company: fullName.trim(),
+              company: signupCompany(readWelcomeDraft(), fullName),
               dialect: "فصحى",
               referralCode: search.ref,
             },
           });
         } catch {
           // Host without server functions (e.g. static deploy): sign up directly.
-          await signUp({ email: email.trim(), password, fullName: fullName.trim(), company: fullName.trim(), dialect: "فصحى" });
+          await signUp({ email: email.trim(), password, fullName: fullName.trim(), company: signupCompany(readWelcomeDraft(), fullName), dialect: "فصحى" });
           res = { ok: true as const };
         }
         if (!res.ok) {

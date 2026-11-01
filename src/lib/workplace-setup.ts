@@ -11,6 +11,10 @@ export type ObjectiveTemplate = { id: string; industry: string; title: string; h
 
 export function emptyWorkplace(industry = ""): WorkplaceSetup { return { version: 2, revision: 0, stage: "objectives", industry, goals: [], employees: [], completedSteps: [] }; }
 export function readWorkplace(profile: unknown): WorkplaceSetup | null { const result = workplaceSchema.safeParse((profile as { workplaceSetup?: unknown } | null)?.workplaceSetup); return result.success ? result.data : null; }
+export function employeeNavigation(profile: unknown, createdAt: string): { visible: boolean; hired: string[] | null } {
+  const setup = readWorkplace(profile);
+  return { visible: setup ? ["objectives", "employees", "tools"].every((step) => setup.completedSteps.some((saved) => saved === step)) : !needsWorkplaceSetup(profile, createdAt), hired: setup?.employees ?? (profile as { onboarding?: SavedOnboarding } | null)?.onboarding?.employees ?? null };
+}
 export function goalFromTemplate(template: ObjectiveTemplate, owner = "general"): WorkplaceGoal { return goalSchema.parse({ id: template.id, owner, title: template.title, kpis: [{ id: `${template.id}-kpi`, measure: template.title, unit: template.unit, target: "", review: "monthly", source: template.source, baseline: null }] }); }
 export function employeeGoals(id: string): WorkplaceGoal[] { return (employeeSetups[id]?.objectives ?? []).map((o) => goalFromTemplate({ ...o, source: o.source === "tasks" ? "manual" : o.source, industry: "" }, id)); }
 export function validGoal(goal: WorkplaceGoal): boolean { return goal.title.trim().length > 0 && goal.kpis.length > 0 && goal.kpis.every((k) => k.measure.trim() && k.unit.trim() && (!k.target || (Number.isFinite(Number(k.target)) && Number(k.target) > 0))); }
