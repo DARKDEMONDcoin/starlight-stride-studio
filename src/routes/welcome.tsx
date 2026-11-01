@@ -77,7 +77,7 @@ function Welcome() {
     if (!ready) return;
     const previous = readWelcomeDraft();
     const businessName = preview?.url === website.trim() ? preview.name.trim().slice(0, 80) : previous?.website === website ? previous.businessName : undefined;
-    writeWelcomeDraft({ purpose, website, businessName, industry, step, plan: recommendation ? { insight: recommendation.insight, actions: recommendation.actions.slice(0, 3), firstMove: recommendation.firstMove } : null });
+    writeWelcomeDraft({ purpose, website, ...(businessName ? { businessName } : {}), industry, step, plan: recommendation ? { insight: recommendation.insight, actions: recommendation.actions.slice(0, 3), firstMove: recommendation.firstMove } : null });
   }, [ready, purpose, website, industry, step, recommendation, preview]);
   useEffect(() => { setExample(false); }, [step]);
   const next = () => setStep((current) => Math.min(current + 1, lastStep));
