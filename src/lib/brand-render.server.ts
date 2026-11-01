@@ -35,7 +35,7 @@ export async function renderBrandPage(url: string, origin: string): Promise<stri
           const kind = resourceType === "Document" ? "html" : resourceType === "Stylesheet" ? "css" : "resource";
           const response = await readBrandPublic(request.url, origin, kind);
           await send("Fetch.fulfillRequest", { requestId, responseCode: 200, responseHeaders: [{ name: "Content-Type", value: response.contentType }, { name: "Access-Control-Allow-Origin", value: origin }], body: Buffer.from(response.body).toString("base64") }, sessionId);
-        } catch { await send("Fetch.failRequest", { requestId, errorReason: "BlockedByClient" }, sessionId).catch(() => {}); }
+        } catch (error) { console.warn("Brand browser resource blocked", { type: resourceType, path: new URL(request.url).pathname, reason: error instanceof Error ? error.message : "blocked" }); await send("Fetch.failRequest", { requestId, errorReason: "BlockedByClient" }, sessionId).catch(() => {}); }
       })();
     }
   });
