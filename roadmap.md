@@ -8,6 +8,9 @@
 - [x] المراحل ٣–٦ وأجزاء من ٧ (التقويم، الكوكيز، صورة الشات، رابط الأسعار الهادئ).
 - [x] صفحة التكاملات الموحدة ورابط /chat/siraj (يحوّل للمعرّف الدائم).
 # Roadmap
+## Employee reply service — 1 November
+- [ ] Replace the invalid stored gateway configuration with the registered managed configuration; verify a real streamed reply without changing models or limits.
+- [ ] Signed-in chat readback: external unmanaged authentication has no available test session.
 ## Setup corrections — 1 November
 - [x] Allow saving and finishing without integrations in both server and database validation; retain KPI and evidence safeguards.
 - [x] Hide employee navigation until three steps are saved; show unhired employees dimmed with Hire now.
