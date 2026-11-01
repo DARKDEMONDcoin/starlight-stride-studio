@@ -31,11 +31,18 @@ export function brandBodyCollector(kind: keyof typeof BRAND_READ_LIMITS) {
     text() { return Buffer.concat(chunks).toString("utf8"); },
   };
 }
+/** Only the same HTTPS host or its exact www alias may canonicalize a scan. */
+export function brandSameSite(raw: string, origin: string): boolean {
+  if (!normalizeBrandUrl(raw)) return false;
+  const target = new URL(raw), source = new URL(origin);
+  return target.protocol === source.protocol && target.port === source.port &&
+    target.hostname.replace(/^www\./, "") === source.hostname.replace(/^www\./, "");
+}
 /** Public DNS is validated and pinned for every hop, including robots and stylesheets. */
 export async function readBrandPublic(raw: string, origin: string, kind: "html" | "text" | "css" = "html") {
   let url = new URL(raw); const deadline = Date.now() + 12_000;
   for (let hop = 0; hop < 5; hop++) {
-    if (!normalizeBrandUrl(url.toString()) || url.origin !== origin) throw new BrandScanError("إعادة توجيه غير آمنة أو خارج الموقع.");
+    if (!brandSameSite(url.toString(), origin)) throw new BrandScanError("إعادة توجيه غير آمنة أو خارج الموقع.");
     const ip = await vettedIPv4(url.hostname);
     const result = await retryBrandPending(() => new Promise<{ status: number; location?: string | undefined; body: string }>((resolve, reject) => {
       const req = httpsRequest(url, { method: "GET", agent: false, family: 4, lookup: (_h, _o, cb) => cb(null, ip, 4), headers: { "User-Agent": "ZiadBrandBot/1.0 (+https://getziad.com)", Accept: kind === "html" ? "text/html" : kind === "css" ? "text/css" : "text/plain", "Accept-Encoding": "identity" } }, (res) => {
@@ -84,12 +91,14 @@ export function parseEvidence(html: string, url: string): EvidencePage {
   return { url, title, text, colors: identityTokens(css), fonts, logo, links: [...new Set(links)], styles };
 }
 export async function collectBrandPages(website: string, onFinding: (pages: EvidencePage[], line: string) => Promise<void>) {
-  const origin = new URL(website).origin;
-  const robots = (await readBrandPublic(`${origin}/robots.txt`, origin, "text")).body;
-  const queue = [website], seen = new Set<string>(), pages: EvidencePage[] = []; const deadline = Date.now() + 48_000;
+  const initial = new URL(website);
+  const robotsResponse = await readBrandPublic(`${initial.origin}/robots.txt`, initial.origin, "text");
+  const origin = new URL(robotsResponse.url).origin, robots = robotsResponse.body;
+  const canonicalWebsite = new URL(`${initial.pathname}${initial.search}`, origin).toString();
+  const queue = [canonicalWebsite], seen = new Set<string>(), pages: EvidencePage[] = []; const deadline = Date.now() + 48_000;
   while (queue.length && seen.size < 10 && Date.now() < deadline) {
     const url = queue.shift(); if (!url || seen.has(url)) continue; seen.add(url);
-    if (!robotsAllows(robots, new URL(url).pathname)) { if (url === website) throw new BrandScanError("الموقع يمنع قراءة هذه الصفحة عبر robots.txt. أدخل المعلومات يدويًا."); continue; }
+    if (!robotsAllows(robots, new URL(url).pathname)) { if (url === canonicalWebsite) throw new BrandScanError("الموقع يمنع قراءة هذه الصفحة عبر robots.txt. أدخل المعلومات يدويًا."); continue; }
     try {
       await onFinding(pages, `نقرأ ${pages.length ? "صفحة من موقعك" : "الصفحة الرئيسية"}…`);
       const response = await readBrandPublic(url, origin), page = parseEvidence(response.body, response.url);
