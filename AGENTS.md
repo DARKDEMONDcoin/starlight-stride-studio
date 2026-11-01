@@ -8,7 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
-- Platform keys stay server-only; user credentials remain encrypted.
+- Keys server-only; credentials encrypted. Read nested AGENTS.md before edits.
 - Employee conversation language uses `reply-language.ts` from the latest user message, independently of brand dialect; deterministic evidence replies use fixed localized templates rather than generation. Why: avoid forced Arabic while preserving evidence safeguards.
 - Social outputs use `src/lib/post-format.ts` across site, queue, and Telegram.
 - Browsers share persistent stops; sensitive intents need owner approval. Why: avoid denied calls.
