@@ -9,6 +9,19 @@ import { brandStages, cssHex, normalizeBrandUrl, robotsAllows, sectionSchemas, t
 
 export type EvidencePage = { url: string; title: string; text: string; colors: { role: string; hex: string; name: string }[]; fonts: string[]; logo: string; links: string[]; styles: string[] };
 export class BrandScanError extends Error { constructor(message: string, public status?: number) { super(message); } }
+export const BRAND_READ_LIMITS = { html: 1_048_576, text: 512_000, css: 512_000 } as const;
+/** Count actual bytes, including chunked responses without Content-Length. */
+export function brandBodyCollector(kind: keyof typeof BRAND_READ_LIMITS) {
+  const chunks: Buffer[] = []; let size = 0;
+  return {
+    push(chunk: Buffer) {
+      size += chunk.length;
+      if (size > BRAND_READ_LIMITS[kind]) throw new BrandScanError("الصفحة أكبر من حد القراءة الآمنة.");
+      chunks.push(chunk);
+    },
+    text() { return Buffer.concat(chunks).toString("utf8"); },
+  };
+}
 /** Public DNS is validated and pinned for every hop, including robots and stylesheets. */
 export async function readBrandPublic(raw: string, origin: string, kind: "html" | "text" | "css" = "html") {
   let url = new URL(raw); const deadline = Date.now() + 12_000;
@@ -23,9 +36,9 @@ export async function readBrandPublic(raw: string, origin: string, kind: "html" 
         if (status !== 200) { res.resume(); reject(new BrandScanError(`تعذّر قراءة الصفحة (${status}).`, status)); return; }
         const type = res.headers["content-type"] ?? "";
         if (kind === "html" && !type.includes("html") || kind === "css" && !type.includes("css")) { res.resume(); reject(new BrandScanError("نوع الصفحة لا يسمح بالقراءة.")); return; }
-        const chunks: Buffer[] = []; let size = 0;
-        res.on("data", (c: Buffer) => { size += c.length; if (size > 512_000) { res.destroy(); reject(new BrandScanError("الصفحة أكبر من حد القراءة الآمنة.")); } else chunks.push(c); });
-        res.on("end", () => resolve({ status, body: Buffer.concat(chunks).toString("utf8") })); res.on("error", reject);
+        const body = brandBodyCollector(kind);
+        res.on("data", (c: Buffer) => { try { body.push(c); } catch (error) { res.destroy(); reject(error); } });
+        res.on("end", () => resolve({ status, body: body.text() })); res.on("error", reject);
       });
       const timer = setTimeout(() => req.destroy(new BrandScanError("انتهت مهلة قراءة الصفحة.")), Math.max(1, deadline - Date.now())); req.on("close", () => clearTimeout(timer)); req.on("error", reject); req.end();
     });
