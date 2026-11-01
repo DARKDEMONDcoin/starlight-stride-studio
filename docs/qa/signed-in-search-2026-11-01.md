@@ -11,7 +11,7 @@
 
 ## Checks
 - 34 initial brand/profile/welcome/ranking checks, 11 rendering/setup tests, 32 browser/brand/ranking/welcome checks, and 27 final matcher/rendering/key/brand tests passed (overlapping sets, not a unique total).
-- Preview build log OK. Two website-analysis deployments reached Vercel READY; latest list-search changes require the final deployment.
+- Preview build log OK. Website-analysis deployment dpl_9bF3wTiSyAQtLiWXBCohpgkrXkD5 reached Vercel READY. Final multilingual list-search deployment was blocked by Vercel daily file-upload limit (429); those changes remain in preview only.
 - Browser checked public integrations, signed-in integrations/help/decisions, workspace, campaigns, old brain, discovery entry and Nour chat entry. Help matching/empty/clear worked. No search available in the account's empty campaign/task view; no data created to manufacture coverage.
 - Full competitor discovery and employee web-research execution were investigated in source but not verified end-to-end. No claim of universal external-provider availability.
 - Successful scan was started in signed-in preview; its real background worker ran the deployed Vercel code and saved results into the account, verified through UI refresh.

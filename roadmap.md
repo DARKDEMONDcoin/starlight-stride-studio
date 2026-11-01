@@ -12,6 +12,7 @@
 - [x] Reproduced signed-in megsyai.com failure: canonical www redirect, JavaScript-only content, then rejected stored AI key.
 - [x] Exact canonical redirects, bounded DNS-pinned Browserbase rendering, registered AI configuration and shared multilingual list matching repaired; focused regressions pass.
 - [x] Actual signed-in four-stage scan completed and all sections persisted after refresh; checked public/app integrations, help and decisions matching/clearing. Empty task/campaign searches and full competitor/chat research remain outside verified coverage; see docs/qa/signed-in-search-2026-11-01.md.
+- [ ] Final list-search deployment blocked by Vercel daily upload limit (429); website-reading fixes are already live at deployment dpl_9bF3wTiSyAQtLiWXBCohpgkrXkD5.
 ## Browserbase activation and Vercel deployment — 1 November
 - [x] Collect Browserbase credentials securely; verify a real rendered f-g.com read with the new account.
 - [x] Save server-only configuration and encrypted Vercel environment variables; clear the obsolete service pause only after verified session success.
