@@ -11,6 +11,7 @@ import { getMember } from "@/data/team";
 import { useWorkspace } from "@/lib/data";
 import { archiveDecision, listDecisions } from "@/lib/decisions.functions";
 import { cn } from "@/lib/utils";
+import { searchMatches } from "@/lib/search-match";
 
 export const Route = createFileRoute("/app/decisions")({
   head: () => ({
@@ -21,6 +22,9 @@ export const Route = createFileRoute("/app/decisions")({
         content: "كل ما اتفقت عليه مع فريقك محفوظ وملزم — لا يُنسى ولا يُعاد سؤاله.",
       },
       { name: "robots", content: "noindex" },
+      { property: "og:title", content: "Ziad — Workspace decisions" },
+      { property: "og:description", content: "Search saved decisions, commitments and approved workspace facts." },
+      { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
     ],
   }),
   component: DecisionsPage,
@@ -57,7 +61,7 @@ function DecisionsPage() {
     const active = (data ?? []).filter((d) => d.status === "active");
     const needle = q.trim();
     if (!needle) return active;
-    return active.filter((d) => `${d.title} ${d.decision} ${d.rationale ?? ""}`.includes(needle));
+    return active.filter((d) => searchMatches(needle, d.title, d.decision, d.rationale));
   }, [data, q]);
 
   const mutation = useMutation({

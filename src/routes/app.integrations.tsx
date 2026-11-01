@@ -33,6 +33,7 @@ import { GUEST_EMAIL } from "@/lib/guest.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { BrandLoader } from "@/components/site/BrandLoader";
+import { searchMatches } from "@/lib/search-match";
 
 export const Route = createFileRoute("/app/integrations")({
   head: () => ({
@@ -394,7 +395,7 @@ function IntegrationsPage() {
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {unique
-              .filter((i) => !query.trim() || appLabel(i.provider).includes(query.trim()))
+              .filter((i) => searchMatches(query, i.provider, appLabel(i.provider)))
               .map((i) => {
                 const rows = (integrations ?? []).filter((x) => x.provider === i.provider);
                 const status = rows.some((x) => x.status === "connected") ? "connected" : rows.some((x) => x.status === "error") ? "error" : i.status;
