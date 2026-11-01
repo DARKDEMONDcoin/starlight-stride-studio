@@ -9,6 +9,15 @@ import { brandStages, cssHex, normalizeBrandUrl, robotsAllows, sectionSchemas, t
 
 export type EvidencePage = { url: string; title: string; text: string; colors: { role: string; hex: string; name: string }[]; fonts: string[]; logo: string; links: string[]; styles: string[] };
 export class BrandScanError extends Error { constructor(message: string, public status?: number) { super(message); } }
+/** A target's 202 is not a page. Retry once, never pass its body to analysis. */
+export async function retryBrandPending<T>(read: () => Promise<T>, deadline: number, wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))): Promise<T> {
+  try { return await read(); }
+  catch (error) {
+    if (!(error instanceof BrandScanError) || error.status !== 202 || Date.now() + 1000 >= deadline) throw error;
+    await wait(1000);
+    return read();
+  }
+}
 export const BRAND_READ_LIMITS = { html: 1_048_576, text: 512_000, css: 512_000 } as const;
 /** Count actual bytes, including chunked responses without Content-Length. */
 export function brandBodyCollector(kind: keyof typeof BRAND_READ_LIMITS) {
@@ -28,12 +37,16 @@ export async function readBrandPublic(raw: string, origin: string, kind: "html" 
   for (let hop = 0; hop < 5; hop++) {
     if (!normalizeBrandUrl(url.toString()) || url.origin !== origin) throw new BrandScanError("إعادة توجيه غير آمنة أو خارج الموقع.");
     const ip = await vettedIPv4(url.hostname);
-    const result = await new Promise<{ status: number; location?: string | undefined; body: string }>((resolve, reject) => {
+    const result = await retryBrandPending(() => new Promise<{ status: number; location?: string | undefined; body: string }>((resolve, reject) => {
       const req = httpsRequest(url, { method: "GET", agent: false, family: 4, lookup: (_h, _o, cb) => cb(null, ip, 4), headers: { "User-Agent": "ZiadBrandBot/1.0 (+https://getziad.com)", Accept: kind === "html" ? "text/html" : kind === "css" ? "text/css" : "text/plain", "Accept-Encoding": "identity" } }, (res) => {
         const status = res.statusCode ?? 0;
         if (status >= 300 && status < 400) { res.resume(); resolve({ status, location: res.headers.location, body: "" }); return; }
         if (status === 404 && kind === "text") { res.resume(); resolve({ status, body: "" }); return; }
-        if (status !== 200) { res.resume(); reject(new BrandScanError(`تعذّر قراءة الصفحة (${status}).`, status)); return; }
+        if (status !== 200) {
+          console.warn("Brand target unavailable", { host: url.hostname, path: url.pathname, status, kind });
+          res.resume();
+          reject(new BrandScanError(status === 202 ? "الموقع لم يقدّم صفحة قابلة للقراءة (202). يمكنك إدخال معلومات نشاطك يدويًا والمتابعة؛ قد يحتاج مسؤول الموقع إلى السماح بالقراءة من خادم زياد." : `تعذّر قراءة الصفحة (${status}).`, status)); return;
+        }
         const type = res.headers["content-type"] ?? "";
         if (kind === "html" && !type.includes("html") || kind === "css" && !type.includes("css")) { res.resume(); reject(new BrandScanError("نوع الصفحة لا يسمح بالقراءة.")); return; }
         const body = brandBodyCollector(kind);
@@ -41,7 +54,7 @@ export async function readBrandPublic(raw: string, origin: string, kind: "html" 
         res.on("end", () => resolve({ status, body: body.text() })); res.on("error", reject);
       });
       const timer = setTimeout(() => req.destroy(new BrandScanError("انتهت مهلة قراءة الصفحة.")), Math.max(1, deadline - Date.now())); req.on("close", () => clearTimeout(timer)); req.on("error", reject); req.end();
-    });
+    }), deadline);
     if (!result.location) return { body: result.body, url: url.toString() };
     url = new URL(result.location, url);
   }
