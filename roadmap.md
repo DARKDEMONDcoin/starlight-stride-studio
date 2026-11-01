@@ -8,6 +8,10 @@
 - [x] المراحل ٣–٦ وأجزاء من ٧ (التقويم، الكوكيز، صورة الشات، رابط الأسعار الهادئ).
 - [x] صفحة التكاملات الموحدة ورابط /chat/siraj (يحوّل للمعرّف الدائم).
 # Roadmap
+## Signed-in search repair — 1 November
+- [ ] Reproduce the reported search failure using the supplied demo account.
+- [ ] Fix the shared cause and run regression tests for affected search surfaces.
+- [ ] Verify actual signed-in results and document website-wide search checks.
 ## Browserbase activation and Vercel deployment — 1 November
 - [x] Collect Browserbase credentials securely; verify a real rendered f-g.com read with the new account.
 - [x] Save server-only configuration and encrypted Vercel environment variables; clear the obsolete service pause only after verified session success.

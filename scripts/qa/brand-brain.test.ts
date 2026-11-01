@@ -1,7 +1,22 @@
 import { describe, expect, test } from "bun:test";
 import { brandCompleteness, contrastRatio, cssHex, mergeDetected, normalizeBrandUrl, robotsAllows } from "../../src/lib/brand-brain";
 import { employeeId, employeeSlug } from "../../src/lib/employee-slugs";
-import { brandBodyCollector, BrandScanError, retryBrandPending } from "../../src/lib/brand-scan.server";
+import { brandBodyCollector, brandSameSite, BrandScanError, retryBrandPending } from "../../src/lib/brand-scan.server";
+describe("Canonical website redirects", () => {
+  test("allows the exact www alias in either direction", () => {
+    expect(brandSameSite("https://www.megsyai.com/robots.txt", "https://megsyai.com")).toBe(true);
+    expect(brandSameSite("https://megsyai.com/about", "https://www.megsyai.com")).toBe(true);
+  });
+  test("retains same-origin paths", () => {
+    expect(brandSameSite("https://megsyai.com/services", "https://megsyai.com")).toBe(true);
+  });
+  test("rejects unrelated, lookalike and arbitrary subdomain redirects", () => {
+    for (const url of ["https://other.com/", "https://megsyai.com.evil.com/", "https://notmegsyai.com/", "https://admin.megsyai.com/"]) expect(brandSameSite(url, "https://megsyai.com")).toBe(false);
+  });
+  test("rejects protocol downgrade, changed ports, credentials and private targets", () => {
+    for (const url of ["http://www.megsyai.com/", "https://www.megsyai.com:8443/", "https://user:pass@www.megsyai.com/", "https://127.0.0.1/"]) expect(brandSameSite(url, "https://megsyai.com")).toBe(false);
+  });
+});
 describe("Target 202 recovery", () => {
   test("retries a pending response once and returns only the real page", async () => {
     let calls = 0;
