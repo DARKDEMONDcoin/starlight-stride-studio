@@ -58,7 +58,7 @@ export async function renderBrandPage(url: string, origin: string): Promise<stri
       const result = await send("Runtime.evaluate", { expression: "JSON.stringify({url:location.href,text:document.body?.innerText||'',html:document.documentElement.outerHTML})", returnByValue: true }, attached);
       const page = JSON.parse(result?.result?.value ?? "{}");
       if (page.url === "about:blank") continue;
-      if (!brandSameSite(page.url ?? url, origin)) throw new BrandScanError("إعادة توجيه غير آمنة أو خارج الموقع.");
+      if (!brandSameSite(page.url ?? url, origin)) { console.warn("Brand rendered navigation rejected", { url: page.url }); throw new BrandScanError("إعادة توجيه غير آمنة أو خارج الموقع."); }
       if ((page.text?.trim().length ?? 0) >= 100 && typeof page.html === "string") {
         if (Buffer.byteLength(page.html) > 1_048_576) throw new BrandScanError("الصفحة أكبر من حد القراءة الآمنة.");
         return page.html;
