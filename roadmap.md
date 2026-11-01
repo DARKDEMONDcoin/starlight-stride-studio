@@ -8,6 +8,10 @@
 - [x] المراحل ٣–٦ وأجزاء من ٧ (التقويم، الكوكيز، صورة الشات، رابط الأسعار الهادئ).
 - [x] صفحة التكاملات الموحدة ورابط /chat/siraj (يحوّل للمعرّف الدائم).
 # Roadmap
+## Setup navigation and website response — 1 November
+- [ ] Minimize both desktop rails during setup and place account/notification controls at the physical left edge.
+- [ ] Diagnose target HTTP 202 during discovery; repair only with verified response handling and regression coverage.
+- [ ] Verify changed flows and document signed-in/deployment limitations.
 ## Business discovery repair — 1 November
 - [x] Fixed the reproduced homepage size-limit failure: HTML has a bounded 1 MiB limit; CSS/text retain 512000 bytes. Public-address pinning, same-site redirects and timeouts unchanged; 12 tests pass.
 - [x] Real f-g.com extraction returned 10 pages; business, audience, voice and identity analyses each returned validated populated results.
