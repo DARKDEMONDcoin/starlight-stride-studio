@@ -39,16 +39,16 @@ export function brandSameSite(raw: string, origin: string): boolean {
     target.hostname.replace(/^www\./, "") === source.hostname.replace(/^www\./, "");
 }
 /** Public DNS is validated and pinned for every hop, including robots and stylesheets. */
-export async function readBrandPublic(raw: string, origin: string, kind: "html" | "text" | "css" = "html") {
+export async function readBrandPublic(raw: string, origin: string, kind: "html" | "text" | "css" | "resource" = "html") {
   let url = new URL(raw); const deadline = Date.now() + 12_000;
   for (let hop = 0; hop < 5; hop++) {
     if (!brandSameSite(url.toString(), origin)) throw new BrandScanError("إعادة توجيه غير آمنة أو خارج الموقع.");
     const ip = await vettedIPv4(url.hostname);
-    const result = await retryBrandPending(() => new Promise<{ status: number; location?: string | undefined; body: string }>((resolve, reject) => {
+    const result = await retryBrandPending(() => new Promise<{ status: number; location?: string | undefined; body: string; contentType: string }>((resolve, reject) => {
       const req = httpsRequest(url, { method: "GET", agent: false, family: 4, lookup: (_h, _o, cb) => cb(null, ip, 4), headers: { "User-Agent": "ZiadBrandBot/1.0 (+https://getziad.com)", Accept: kind === "html" ? "text/html" : kind === "css" ? "text/css" : "text/plain", "Accept-Encoding": "identity" } }, (res) => {
         const status = res.statusCode ?? 0;
-        if (status >= 300 && status < 400) { res.resume(); resolve({ status, location: res.headers.location, body: "" }); return; }
-        if (status === 404 && kind === "text") { res.resume(); resolve({ status, body: "" }); return; }
+        if (status >= 300 && status < 400) { res.resume(); resolve({ status, location: res.headers.location, body: "", contentType: "text/plain" }); return; }
+        if (status === 404 && kind === "text") { res.resume(); resolve({ status, body: "", contentType: "text/plain" }); return; }
         if (status !== 200) {
           console.warn("Brand target unavailable", { host: url.hostname, path: url.pathname, status, kind });
           res.resume();
@@ -56,13 +56,14 @@ export async function readBrandPublic(raw: string, origin: string, kind: "html" 
         }
         const type = res.headers["content-type"] ?? "";
         if (kind === "html" && !type.includes("html") || kind === "css" && !type.includes("css")) { res.resume(); reject(new BrandScanError("نوع الصفحة لا يسمح بالقراءة.")); return; }
-        const body = brandBodyCollector(kind);
+        if (kind === "resource" && !/javascript|json|text\/plain/.test(type)) { res.resume(); reject(new BrandScanError("نوع المورد لا يسمح بالقراءة.")); return; }
+        const body = brandBodyCollector(kind === "resource" ? "html" : kind);
         res.on("data", (c: Buffer) => { try { body.push(c); } catch (error) { res.destroy(); reject(error); } });
-        res.on("end", () => resolve({ status, body: body.text() })); res.on("error", reject);
+        res.on("end", () => resolve({ status, body: body.text(), contentType: type })); res.on("error", reject);
       });
       const timer = setTimeout(() => req.destroy(new BrandScanError("انتهت مهلة قراءة الصفحة.")), Math.max(1, deadline - Date.now())); req.on("close", () => clearTimeout(timer)); req.on("error", reject); req.end();
     }), deadline);
-    if (!result.location) return { body: result.body, url: url.toString() };
+    if (!result.location) return { body: result.body, url: url.toString(), contentType: result.contentType };
     url = new URL(result.location, url);
   }
   throw new BrandScanError("تجاوز الموقع عدد التحويلات المسموح.");
@@ -101,7 +102,12 @@ export async function collectBrandPages(website: string, onFinding: (pages: Evid
     if (!robotsAllows(robots, new URL(url).pathname)) { if (url === canonicalWebsite) throw new BrandScanError("الموقع يمنع قراءة هذه الصفحة عبر robots.txt. أدخل المعلومات يدويًا."); continue; }
     try {
       await onFinding(pages, `نقرأ ${pages.length ? "صفحة من موقعك" : "الصفحة الرئيسية"}…`);
-      const response = await readBrandPublic(url, origin), page = parseEvidence(response.body, response.url);
+      const response = await readBrandPublic(url, origin);
+      let page = parseEvidence(response.body, response.url);
+      if (page.text.length < 100 && !pages.length) {
+        const { renderBrandPage } = await import("./brand-render.server");
+        page = parseEvidence(await renderBrandPage(response.url, origin), response.url);
+      }
       if (page.text.length < 100) { if (!pages.length) throw new BrandScanError("الموقع يعتمد على جافاسكريبت أو يمنع القراءة. أدخل المعلومات يدويًا."); continue; }
       if (!pages.length) for (const style of page.styles) {
         if (!robotsAllows(robots, new URL(style).pathname)) continue;
