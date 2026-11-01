@@ -20,7 +20,7 @@ export function WorkplaceSetupGate({ children }: { children: ReactNode }) {
     void supabase.auth.getUser().then(async ({ data }) => {
       if (!active || !data.user || boundWelcomeUser() !== data.user.id || Date.now() - Date.parse(data.user.created_at) > 10 * 60 * 1000) return;
       const draft = readWelcomeDraft(); if (!draft) return;
-      await saveContext({ data: { workspaceId: workspace.id, welcome: { website: draft.website, industry: draft.industry, purpose: draft.purpose } } });
+      await saveContext({ data: { workspaceId: workspace.id, welcome: { website: draft.website, businessName: draft.businessName, industry: draft.industry, purpose: draft.purpose } } });
       clearWelcomeBinding(); await qc.invalidateQueries({ queryKey: ["workspace"] });
     }).catch(() => { /* Keep the bound draft for retry; never block account access. */ });
     return () => { active = false; };

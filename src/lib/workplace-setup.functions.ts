@@ -31,7 +31,7 @@ export const workplaceFirstTaskStatus = createServerFn({ method: "POST" }).middl
   return [...new Set((rows ?? []).map((r) => r.employee_id))];
 });
 
-export const saveNewWorkplaceContext = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input: unknown) => z.object({ workspaceId: z.string().uuid(), welcome: z.object({ website: z.string().max(600).optional(), industry: z.string().max(120).optional(), purpose: z.string().max(40).optional() }) }).parse(input)).handler(async ({ data, context }) => {
+export const saveNewWorkplaceContext = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input: unknown) => z.object({ workspaceId: z.string().uuid(), welcome: z.object({ website: z.string().max(600).optional(), businessName: z.string().trim().max(80).optional(), industry: z.string().max(120).optional(), purpose: z.string().max(40).optional() }) }).parse(input)).handler(async ({ data, context }) => {
   const { error } = await context.supabase.rpc("save_new_workspace_context", { p_workspace: data.workspaceId, p_context: data.welcome });
   if (error) throw new Error("تعذّر حفظ سياق البداية.");
   return { ok: true };

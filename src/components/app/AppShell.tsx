@@ -27,7 +27,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { claimReferral } from "@/lib/referral.functions";
 import { employeeSlug } from "@/lib/employee-slugs";
 import { useBrandBrain } from "@/lib/brand-brain-query";
-import { needsWorkplaceSetup } from "@/lib/workplace-setup";
+import { needsWorkplaceSetup, employeeNavigation } from "@/lib/workplace-setup";
 
 function ReferralClaimer() {
   const claim = useServerFn(claimReferral);
@@ -96,7 +96,7 @@ export function WorkspaceCard() {
 function SidebarBody({ onNavigate, collapsed = false, onToggle }: { onNavigate?: () => void; collapsed?: boolean; onToggle?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: inboxWorkspace } = useWorkspace();
-  const setupRequired = Boolean(inboxWorkspace && needsWorkplaceSetup(inboxWorkspace.profile, inboxWorkspace.created_at));
+  const employeeState = inboxWorkspace ? employeeNavigation(inboxWorkspace.profile, inboxWorkspace.created_at) : { visible: false, hired: null };
   const { data: inbox } = useEmployeeInbox(inboxWorkspace?.id);
   // ترتيب واتساب: الأحدث رسالةً أولاً، ومن لم يراسلك بعد يبقى بترتيب الفريق.
   const inboxOrder = [...team].sort((a, b) => {
@@ -119,12 +119,18 @@ function SidebarBody({ onNavigate, collapsed = false, onToggle }: { onNavigate?:
 
       <SpaceSwitcher collapsed={collapsed} />
 
-      <div className={cn("flex min-h-0 flex-1 flex-col", collapsed && "w-full")}>
+      {employeeState.visible && <div className={cn("flex min-h-0 flex-1 flex-col", collapsed && "w-full")}>
         <div className={cn("mb-2 px-2", collapsed && "sr-only")}>
           <p className="text-[0.68rem] font-bold text-muted-foreground">الموظفون</p>
         </div>
         <div className={cn("min-h-0 flex-1 space-y-1.5 overflow-y-auto", collapsed && "overflow-x-hidden")}>
           {inboxOrder.map((m) => {
+            const hired = employeeState.hired === null || employeeState.hired.includes(m.id);
+            if (!hired) return <div key={m.id} className={cn("flex items-center gap-2 px-2.5 py-2", collapsed && "flex-col px-0")}>
+              <Portrait memberId={m.id} name={m.name} className="size-10 shrink-0 rounded-full grayscale opacity-40" />
+              {!collapsed && <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground opacity-60">{m.name}</span>}
+              <Button variant="outline" size="sm" className="h-7 px-1.5 text-[0.65rem]" asChild><Link to="/app/setup" search={{ step: "employees", employee: m.id }} onClick={onNavigate} title={`Hire ${m.name}`}>Hire now</Link></Button>
+            </div>;
             const thread = inbox?.find((t) => t.employee_id === m.id);
             const unread = thread?.unread_count ?? 0;
             const time = inboxTime(thread?.last_employee_message_at);
@@ -132,7 +138,7 @@ function SidebarBody({ onNavigate, collapsed = false, onToggle }: { onNavigate?:
             return (
               <Link
                 key={m.id}
-                to={setupRequired ? "/app/setup" : "/app/chat/$id"}
+                to="/app/chat/$id"
                 params={{ id: employeeSlug(m.id) }}
                 onClick={onNavigate}
                  title={collapsed ? m.name : undefined}
@@ -171,7 +177,7 @@ function SidebarBody({ onNavigate, collapsed = false, onToggle }: { onNavigate?:
             );
           })}
         </div>
-      </div>
+      </div>}
       <Link to="/pricing" onClick={onNavigate} aria-label={collapsed ? "عرض الأسعار" : undefined} title={collapsed ? "عرض الأسعار" : undefined} className={cn("app-sidebar-pricing", !inbox?.some((t) => t.last_employee_message_at) && "is-quiet", collapsed && "!grid !size-11 !place-items-center !p-0")}>
         {collapsed ? <ArrowLeft className="size-5" /> : <>
         <span>

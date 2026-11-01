@@ -75,8 +75,10 @@ function Welcome() {
   }, []);
   useEffect(() => {
     if (!ready) return;
-    writeWelcomeDraft({ purpose, website, industry, step, plan: recommendation ? { insight: recommendation.insight, actions: recommendation.actions.slice(0, 3), firstMove: recommendation.firstMove } : null });
-  }, [ready, purpose, website, industry, step, recommendation]);
+    const previous = readWelcomeDraft();
+    const businessName = preview?.url === website.trim() ? preview.name.trim().slice(0, 80) : previous?.website === website ? previous.businessName : undefined;
+    writeWelcomeDraft({ purpose, website, businessName, industry, step, plan: recommendation ? { insight: recommendation.insight, actions: recommendation.actions.slice(0, 3), firstMove: recommendation.firstMove } : null });
+  }, [ready, purpose, website, industry, step, recommendation, preview]);
   useEffect(() => { setExample(false); }, [step]);
   const next = () => setStep((current) => Math.min(current + 1, lastStep));
   const back = () => setStep((current) => Math.max(current - 1, 0));
@@ -115,7 +117,7 @@ function Welcome() {
     const normalized = normalizeBrandUrl(website);
     if (!normalized) { setError("أدخل رابط موقع عام صالح يبدأ بـ https."); return false; }
     setWebsite(normalized);
-    writeWelcomeDraft({ ...readWelcomeDraft(), purpose, website: normalized, industry, step });
+    writeWelcomeDraft({ purpose, website: normalized, industry, step });
     setError(""); setLoading(true); setPreview(null); setFindingTab("offer"); setScanStage(0);
     const timer = window.setInterval(() => setScanStage((s) => Math.min(s + 1, scanStages.length - 1)), 2800);
     let ok = false;
