@@ -12,16 +12,17 @@
 - [x] Collect Browserbase credentials securely; verify a real rendered f-g.com read with the new account.
 - [x] Save server-only configuration and encrypted Vercel environment variables; clear the obsolete service pause only after verified session success.
 - [x] Actual app browsePage returns verified Future Group content; 18 browser/brand tests and 10 setup tests pass.
-- [ ] Deploy current project to Vercel and confirm READY/live public routes. Signed-in scan persistence remains unavailable with external unmanaged authentication. Brand Brain retains its safe direct reader; activating Browserbase does not replace its transport.
+- [x] Vercel deployment dpl_FxAxmEa9CghbHvC5JB9AGtoreJDd reached READY; homepage, welcome and setup entry return HTTP 200. Preview build OK.
+- [ ] Signed-in scan persistence remains unavailable with external unmanaged authentication. Brand Brain retains its safe direct reader; activating Browserbase does not replace its transport.
 ## Setup navigation and website response — 1 November
 - [x] Minimize both rails from route/persisted setup state without changing saved preferences; place non-chat account/notification controls at the physical left edge. Original logo/navigation retained.
 - [x] Identify 202 as a direct target-site response, not AI failure; add one deadline-bounded retry and clear manual-entry recovery, never accept pending HTML as evidence. 26 focused tests pass; local f-g.com collection returns 10 pages.
 - [x] Isolated stylesheet geometry checked at 1280/847/390; desktop rails each 64px, icons left, no overflow; latest preview build OK. QA recorded in docs/qa/setup-navigation-discovery-2026-11-01.md.
-- [ ] Live signed-in 202 resolution/save/readback: no external unmanaged test session, live response body unavailable. Changes not deployed; persistent target denial may require website administrator allowlisting.
+- [ ] Live signed-in 202 resolution/save/readback: no external unmanaged test session, live response body unavailable. Changes deployed 1 November; persistent target denial may require website administrator allowlisting.
 ## Business discovery repair — 1 November
 - [x] Fixed the reproduced homepage size-limit failure: HTML has a bounded 1 MiB limit; CSS/text retain 512000 bytes. Public-address pinning, same-site redirects and timeouts unchanged; 12 tests pass.
 - [x] Real f-g.com extraction returned 10 pages; business, audience, voice and identity analyses each returned validated populated results.
-- [ ] Signed-in retry/save/readback: external unmanaged authentication has no available test session. Fix is preview-only until deployment.
+- [ ] Signed-in retry/save/readback: external unmanaged authentication has no available test session. Reader fix deployed to Vercel.
 ## Employee reply service — 1 November
 - [x] Replaced the invalid stored gateway configuration with the registered managed configuration; the actual employee reply path returned a nonempty streamed response without changing models or limits. No deployment required for the shared server-side configuration update.
 - [ ] Signed-in chat readback: external unmanaged authentication has no available test session.
