@@ -48,6 +48,10 @@ function Setup() {
   }, [workspace?.id]);
   useEffect(() => { if (search.step) setView(search.step); }, [search.step]);
   useEffect(() => {
+    if (!search.employee || !setup || !team.some((m) => m.id === search.employee)) return;
+    setView("employees"); setHire(search.employee); setHireGoals(setup.goals.filter((g) => g.owner === search.employee));
+  }, [search.employee]);
+  useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
     window.addEventListener("beforeunload", warn); return () => window.removeEventListener("beforeunload", warn);

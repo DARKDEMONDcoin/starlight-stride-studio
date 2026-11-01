@@ -450,7 +450,9 @@ function NameWorkspace({ workspace }: { workspace: { id: string; name: string; w
       if (!active || !data.user) return;
       try { if (localStorage.getItem(key)) return; } catch { return; }
       if (boundWelcomeUser() !== data.user.id) return;
-      const site = readWelcomeDraft()?.website || workspace.website || "";
+      const draft = readWelcomeDraft();
+      if (draft?.businessName?.trim()) return;
+      const site = draft?.website || workspace.website || "";
       let guess = "";
       try { if (site) guess = new URL(/^https?:/.test(site) ? site : `https://${site}`).hostname.replace(/^www\./, "").split(".")[0] ?? ""; } catch { /* ignore */ }
       setName(guess ? guess.charAt(0).toUpperCase() + guess.slice(1) : "");

@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { canFinish, emptyWorkplace, employeeGoals, goalFromTemplate, needsWorkplaceSetup, onboardingFromWorkplace, recommendedEmployees, requiredTools, suggestedFirstTask, toolsReady, validGoal } from "../workplace-setup";
+import { canFinish, emptyWorkplace, employeeGoals, employeeNavigation, goalFromTemplate, needsWorkplaceSetup, onboardingFromWorkplace, recommendedEmployees, requiredTools, suggestedFirstTask, toolsReady, validGoal } from "../workplace-setup";
 
 const goal = goalFromTemplate({ id: "repeat", industry: "التجارة الإلكترونية", title: "زيادة الشراء المتكرر", hint: "", unit: "% عملاء عائدين", source: "manual" });
 describe("approved workplace setup rules", () => {
+  it("hides the employee list until all three steps are saved", () => {
+    const setup = { ...emptyWorkplace(), employees: ["dana"], completedSteps: ["objectives", "employees"] as const };
+    expect(employeeNavigation({ workplaceSetup: { ...setup, completedSteps: [...setup.completedSteps] } }, "2026-11-01T00:00:00Z").visible).toBe(false);
+    expect(employeeNavigation({ workplaceSetup: { ...setup, completedSteps: ["objectives", "employees", "tools"] } }, "2026-11-01T00:00:00Z")).toEqual({ visible: true, hired: ["dana"] });
+  });
   it("requires setup for a new account workspace and preserves existing customer access", () => { expect(needsWorkplaceSetup({}, "2026-10-31T01:00:00Z")).toBe(true); expect(needsWorkplaceSetup({}, "2026-10-30T23:00:00Z")).toBe(false); });
   it("does not infer a KPI baseline or target from a suggested industry goal", () => { expect(goal.kpis[0]?.baseline).toBe(null); expect(goal.kpis[0]?.target).toBe(""); });
   it("supports a custom business objective and its KPI in employee context", () => { const setup = { ...emptyWorkplace(), goals: [{ ...goal, id: "custom", title: "Reduce support waits" }] }; expect(onboardingFromWorkplace(setup).objectives[0]?.title).toContain("Reduce support waits"); });
