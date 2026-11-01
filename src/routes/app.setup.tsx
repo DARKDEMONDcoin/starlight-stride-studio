@@ -59,7 +59,7 @@ function Setup() {
   const recommendations = recommendedEmployees(general);
   const members = allEmployees ? team : team.filter((m) => recommendations.some((r) => r.id === m.id) || setup.employees.includes(m.id));
   const requirements = requiredTools(setup);
-  const ready = !connectionsLoading && !connectionsError && canFinish(setup, connections ?? []);
+  const ready = canFinish(setup, []);
   const progress = setup.completedSteps.length;
   const change = (next: WorkplaceSetup) => { setSetup(next); setDirty(true); setError(""); };
   const setGeneral = (goals: WorkplaceGoal[]) => change({ ...setup, goals: [...setup.goals.filter((g) => g.owner !== "general"), ...goals], completedSteps: setup.completedSteps.filter((s) => s !== "tools"), stage: "objectives" });

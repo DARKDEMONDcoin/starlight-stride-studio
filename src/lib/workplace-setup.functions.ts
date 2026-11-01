@@ -18,8 +18,7 @@ export const saveWorkplaceSetup = createServerFn({ method: "POST" }).middleware(
   if (setup.goals.some((g) => g.owner !== "general" && !setup.employees.includes(g.owner)) || new Set(setup.employees).size !== setup.employees.length || new Set(setup.goals.map((g) => `${g.owner}:${g.id}`)).size !== setup.goals.length) throw new Error("راجع ارتباط الأهداف بالموظفين المختارين.");
   if (setup.goals.some((g) => !validGoal(g))) throw new Error("راجع اسم المؤشر ووحدته والقيمة المستهدفة.");
   if (["ready", "complete"].includes(setup.stage)) {
-    const { data: integrations, error } = await context.supabase.from("integrations").select("provider,status,account").eq("workspace_id", data.workspaceId);
-    if (error || !canFinish(setup, integrations ?? [])) throw new Error("أكمل الأهداف والتوظيف واربط الأدوات الأساسية أولًا.");
+    if (!canFinish(setup, [])) throw new Error("أكمل أهداف النشاط وأهداف الموظفين أولًا.");
   }
   const { data: saved, error } = await context.supabase.rpc("save_workplace_setup", { p_workspace: data.workspaceId, p_setup: setup as never, p_expected_revision: setup.revision });
   if (error) throw new Error(error.message.includes("another session") ? "تغيّر الإعداد في جلسة أخرى. أعد تحميل الصفحة قبل الحفظ." : "تعذّر حفظ الإعداد. اختياراتك ما زالت هنا؛ أعد المحاولة.");
