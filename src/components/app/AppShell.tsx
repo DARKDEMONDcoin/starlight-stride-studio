@@ -93,7 +93,7 @@ export function WorkspaceCard() {
   );
 }
 
-function SidebarBody({ onNavigate, collapsed = false, onToggle }: { onNavigate?: () => void; collapsed?: boolean; onToggle?: () => void }) {
+function SidebarBody({ onNavigate, collapsed = false, onToggle }: { onNavigate?: () => void; collapsed?: boolean; onToggle?: (() => void) | undefined }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: inboxWorkspace } = useWorkspace();
   const employeeState = inboxWorkspace ? employeeNavigation(inboxWorkspace.profile, inboxWorkspace.created_at) : { visible: false, hired: null };
@@ -283,7 +283,7 @@ const secondaryLinks = [
   { to: "/app/help", label: "المساعدة والدعم", icon: CircleHelp },
 ] as const;
 
-function PrimaryNavigation({ expanded, onToggle, mobile = false, onNavigate }: { expanded: boolean; onToggle?: () => void; mobile?: boolean; onNavigate?: (chats: boolean) => void }) {
+function PrimaryNavigation({ expanded, onToggle, mobile = false, onNavigate }: { expanded: boolean; onToggle?: (() => void) | undefined; mobile?: boolean; onNavigate?: (chats: boolean) => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: workspace } = useWorkspace();
   const { data: brand } = useBrandBrain(workspace?.id);
@@ -461,11 +461,12 @@ function AppShellFrame({ title, lead, actions, children, padded, compactTitle, h
               )}
             >
               {actions}
+              {compactTitle && <><NotificationBell /><UserMenu name={profile?.full_name ?? null} /></>}
             </div>
-            <div className="app-account-controls flex shrink-0 items-center gap-1 sm:gap-2">
+            {!compactTitle && <div className="app-account-controls flex shrink-0 items-center gap-1 sm:gap-2">
               <NotificationBell />
               <UserMenu name={profile?.full_name ?? null} />
-            </div>
+            </div>}
           </div>
         </header>
         {embedded ? null : <GuestBar />}
