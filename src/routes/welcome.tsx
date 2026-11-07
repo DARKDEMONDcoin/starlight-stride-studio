@@ -121,6 +121,7 @@ function Welcome() {
       const response = await fetch("/api/public/welcome-analysis", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: normalized }) });
       const result = await readWelcomeAnalysis(response, setScanStage);
       ok = true;
+      setScanStage(3);
       setPreview(result);
       setWebsite(result.url);
       if (result.industry && welcomeIndustries.includes(result.industry) && result.industry !== "أخرى") { setIndustry(result.industry); setOtherSelected(false); }
