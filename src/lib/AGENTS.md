@@ -1,2 +1,3 @@
 # Website rendering
+- Pre-signup analysis uses a shared limiter/cache for RPC and streaming entry points; progress comes only from actual reader/model checkpoints. Why: genuine sequential progress without extra anonymous model calls.
 - Brand rendering uses Browserbase with all target requests intercepted and fulfilled by the DNS-pinned public reader. Honor robots, block writes/off-site resources/workers/sockets, bound resource count/bytes/time, release sessions. Why: JavaScript evidence without relaxing scanner network safety.

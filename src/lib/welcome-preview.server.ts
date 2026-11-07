@@ -245,15 +245,17 @@ async function siteStylesheet(href: string, pageUrl: string, root: string): Prom
 }
 
 /** Reads the site and also returns the visible-text corpus used for AI understanding (server-only). */
-export async function readSite(raw: string): Promise<{ preview: WelcomePreview; corpus: string }> {
+export async function readSite(raw: string, onProgress?: (stage: number) => void): Promise<{ preview: WelcomePreview; corpus: string }> {
   const url = publicWebsiteUrl(raw);
   if (!url) throw new Error("أدخل رابط موقع عام صالح، مثل example.com");
+  onProgress?.(0);
   const first = await readPage(url, null, true).catch(async (error: unknown) => {
     const found = await searchFallback(url).catch(() => null);
     if (found) return found;
     throw error;
   });
-  if ("preview" in first) return first;
+  onProgress?.(1);
+  if ("preview" in first) { onProgress?.(2); return first; }
   const root = new URL(first.url).hostname.replace(/^www\./, "");
   const { document } = parseHTML(first.html);
   const meta = (selector: string) => clean(document.querySelector(selector)?.getAttribute("content"));
@@ -361,6 +363,7 @@ export async function readSite(raw: string): Promise<{ preview: WelcomePreview; 
   const more = first.via === "browser" ? [] : await Promise.all(candidates.map(({ url: candidate }) => readPage(candidate, root).catch(() => null)));
   const pagesRead = [first.url];
   for (const page of more) if (page) { pagesRead.push(page.url); collect(page.html, page.url); }
+  onProgress?.(2);
 
   const html = first.html.slice(0, 150_000);
   const platform = /cdn\.shopify\.com|myshopify/i.test(html) ? "Shopify" : /woocommerce/i.test(html) ? "WooCommerce" : /wp-content|wordpress/i.test(html) ? "WordPress" : /salla\.sa|cdn\.salla/i.test(html) ? "سلة" : /zid\.store|cdn\.zid/i.test(html) ? "زد" : /webflow\.com|data-wf-page/i.test(html) ? "Webflow" : /wixstatic|wix\.com/i.test(html) ? "Wix" : /ghost\.io|ghost-url/i.test(html) ? "Ghost" : "";

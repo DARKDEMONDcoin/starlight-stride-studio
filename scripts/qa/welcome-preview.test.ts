@@ -1,10 +1,17 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { previewWebsite, publicWebsiteUrl } from "../../src/lib/welcome-preview.server";
+import { previewWebsite, publicWebsiteUrl, readSite } from "../../src/lib/welcome-preview.server";
 
 const fetchOriginal = globalThis.fetch;
 afterEach(() => { globalThis.fetch = fetchOriginal; });
 
 describe("public welcome scan", () => {
+  test("emits reading, offerings and identity checkpoints only as work occurs", async () => {
+    const stages: number[] = [];
+    globalThis.fetch = (async () => new Response(`<html><head><title>Acme</title></head><body><main><h1>Acme</h1><p>${"Public products and services. ".repeat(25)}</p></main></body></html>`, { headers: { "content-type": "text/html" } })) as typeof fetch;
+    const result = await readSite("example.com", (stage) => stages.push(stage));
+    expect(stages).toEqual([0, 1, 2]);
+    expect(result.preview.pagesRead).toEqual(["https://example.com/"]);
+  });
   test("rejects private, local, credentials and insecure URLs", () => {
     for (const url of ["http://example.com", "https://localhost", "https://127.0.0.1", "https://169.254.169.254", "https://metadata.google.internal", "https://example.local", "https://u:p@example.com", "https://example.com:444"]) expect(publicWebsiteUrl(url)).toBeNull();
     expect(publicWebsiteUrl("example.com")?.href).toBe("https://example.com/");
