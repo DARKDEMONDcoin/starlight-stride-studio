@@ -9,8 +9,9 @@
 - [x] صفحة التكاملات الموحدة ورابط /chat/siraj (يحوّل للمعرّف الدائم).
 # Roadmap
 ## Pre-signup business analysis — 7 November
-- [ ] Add explicit analysis submission and reveal real sequential reading/analysis progress before registration.
-- [ ] Verify completion, failure recovery and responsive layouts; preserve bounded anonymous analysis and signup flow.
+- [x] Add explicit analysis submission and reveal real sequential reading/analysis progress before registration.
+- [x] Real public f-g.com reading and responsive layouts verified; 13 focused tests pass. Preserve bounded anonymous analysis and signup flow.
+- [ ] Full AI interpretation blocked by insufficient analysis-service credits (402); partial evidence remains usable. See docs/qa/pre-signup-analysis-2026-11-07.md.
 ## Signed-in search repair — 1 November
 - [x] Reproduced signed-in megsyai.com failure: canonical www redirect, JavaScript-only content, then rejected stored AI key.
 - [x] Exact canonical redirects, bounded DNS-pinned Browserbase rendering, registered AI configuration and shared multilingual list matching repaired; focused regressions pass.
