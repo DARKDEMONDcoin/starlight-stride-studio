@@ -8,6 +8,9 @@
 - [x] المراحل ٣–٦ وأجزاء من ٧ (التقويم، الكوكيز، صورة الشات، رابط الأسعار الهادئ).
 - [x] صفحة التكاملات الموحدة ورابط /chat/siraj (يحوّل للمعرّف الدائم).
 # Roadmap
+## Pre-signup business analysis — 7 November
+- [ ] Add explicit analysis submission and reveal real sequential reading/analysis progress before registration.
+- [ ] Verify completion, failure recovery and responsive layouts; preserve bounded anonymous analysis and signup flow.
 ## Signed-in search repair — 1 November
 - [x] Reproduced signed-in megsyai.com failure: canonical www redirect, JavaScript-only content, then rejected stored AI key.
 - [x] Exact canonical redirects, bounded DNS-pinned Browserbase rendering, registered AI configuration and shared multilingual list matching repaired; focused regressions pass.
