@@ -79,8 +79,9 @@ async function understand(preview: WelcomePreview, corpus: string): Promise<Welc
 }
 
 /** Read + understand, cached per host so repeat visits are instant and free. */
-export async function analyzeWebsite(raw: string): Promise<WelcomePreview> {
-  const { preview, corpus } = await readSite(raw);
+export async function analyzeWebsite(raw: string, onProgress?: (stage: number) => void): Promise<WelcomePreview> {
+  const { preview, corpus } = await readSite(raw, onProgress);
+  onProgress?.(3);
   const profile = await understand(preview, corpus);
   const value: WelcomePreview = {
     ...preview,
