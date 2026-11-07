@@ -8,19 +8,17 @@ import { Portrait } from "@/components/site/Portrait";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { readWelcomeDraft, writeWelcomeDraft } from "@/lib/welcome-draft";
-import { getWelcomePreview } from "@/lib/welcome-preview.functions";
+import { readWelcomeAnalysis, welcomeAnalysisStages } from "@/lib/welcome-analysis";
 import type { WelcomePreview } from "@/lib/welcome-preview.server";
 import { getWelcomeRecommendation } from "@/lib/welcome-recommendation.functions";
 import type { WelcomeRecommendation } from "@/lib/welcome-recommendation.server";
 import { welcomeIndustries } from "@/lib/welcome-industries";
 import { purposeCopy, purposeMembers, type WelcomePurpose } from "@/lib/welcome-purpose";
-import { BrandScanProgress } from "@/components/app/BrandScanProgress";
 import { normalizeBrandUrl } from "@/lib/brand-brain";
 import "@/components/app/brand-brain.css";
 
 export type WelcomeDraft = { purpose: string; website: string; industry: string; step?: number };
 const industries = welcomeIndustries;
-const scanStages = ["جاري الفحص", "قريبًا تظهر النتيجة"];
 type FindingTab = "offer" | "brand" | "team" | "reach";
 const lastStep = 5;
 
@@ -40,7 +38,6 @@ export const Route = createFileRoute("/welcome")({
 
 function Welcome() {
   const { plan } = Route.useSearch();
-  const inspect = useServerFn(getWelcomePreview);
   const recommend = useServerFn(getWelcomeRecommendation);
   const [step, setStep] = useState(0);
   const [purpose, setPurpose] = useState("");
@@ -119,16 +116,16 @@ function Welcome() {
     setWebsite(normalized);
     writeWelcomeDraft({ purpose, website: normalized, industry, step });
     setError(""); setLoading(true); setPreview(null); setFindingTab("offer"); setScanStage(0);
-    const timer = window.setInterval(() => setScanStage((s) => Math.min(s + 1, scanStages.length - 1)), 2800);
     let ok = false;
     try {
-      const result = await inspect({ data: { url: normalized } });
+      const response = await fetch("/api/public/welcome-analysis", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: normalized }) });
+      const result = await readWelcomeAnalysis(response, setScanStage);
       ok = true;
       setPreview(result);
       setWebsite(result.url);
       if (result.industry && welcomeIndustries.includes(result.industry) && result.industry !== "أخرى") { setIndustry(result.industry); setOtherSelected(false); }
     } catch (e) { setError(e instanceof Error ? e.message : "تعذّر فحص الموقع الآن. يمكنك المتابعة دون فحص."); }
-    finally { window.clearInterval(timer); setLoading(false); }
+    finally { setLoading(false); }
     return ok;
   }
 
@@ -151,12 +148,18 @@ function Welcome() {
            <span className="welcome-eyebrow"><Globe2 className="size-4" /> {chosenPurpose === "personal" ? "فكرتك" : "بدايتك"}</span>
            <h1 className="welcome-title">{copy.website}</h1>
            <p className="welcome-lead">{copy.websiteLead}</p>
-          <label className="welcome-custom-label" htmlFor="welcome-url">رابط موقعك <span className="text-xs font-normal text-muted-foreground">اختياري</span></label><form className="welcome-url-form" onSubmit={(e) => { e.preventDefault(); if (!website.trim()) { next(); return; } void scan().then((ok) => { if (ok) next(); }); }}><input id="welcome-url" className="welcome-input" dir="ltr" type="text" inputMode="url" value={website} onChange={(e) => { setWebsite(e.target.value); setError(""); setPreview(null); }} placeholder="yourbusiness.com" autoComplete="url" /></form>
-           {loading && <div className="welcome-scan-progress" role="status" aria-live="polite"><Loader2 className="size-4 animate-spin" /> {scanStages[scanStage]}</div>}
+          <label className="welcome-custom-label" htmlFor="welcome-url">رابط موقعك <span className="text-xs font-normal text-muted-foreground">اختياري</span></label><form className="welcome-url-form" onSubmit={(e) => { e.preventDefault(); void scan(); }}><input id="welcome-url" className="welcome-input" dir="ltr" type="text" inputMode="url" value={website} disabled={loading} onChange={(e) => { setWebsite(e.target.value); setError(""); setPreview(null); setScanStage(0); }} placeholder="yourbusiness.com" autoComplete="url" /><Button type="submit" className="welcome-scan-btn" disabled={loading || !website.trim()}>{loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}{loading ? "جارٍ التحليل…" : error ? "إعادة التحليل" : "ابدأ تحليل نشاطك"}</Button></form>
+          {(loading || showPreview || error) && <section className="welcome-analysis" aria-label="تقدم تحليل النشاط">
+            <div className="flex justify-between gap-3 text-xs"><strong className="text-primary">{showPreview ? "اكتمل التحليل" : error ? "توقف التحليل" : "نتعرّف على نشاطك"}</strong><span>{showPreview ? 100 : scanStage * 25}٪</span></div>
+            <progress className="mt-3 h-1.5 w-full" aria-label="تقدم تحليل النشاط" value={showPreview ? 100 : scanStage * 25} max={100} />
+            <ul className="mt-4 space-y-2 text-start" aria-live="polite">{welcomeAnalysisStages.slice(0, showPreview ? 4 : scanStage + 1).map((label, index) => <li key={label} className={cn("flex items-center gap-2 text-sm", showPreview || index < scanStage ? "text-primary" : "text-foreground")}>
+              {showPreview || index < scanStage ? <Check className="size-4 shrink-0" /> : error ? <X className="size-4 shrink-0 text-destructive" /> : <Loader2 className="size-4 shrink-0 animate-spin" />}<span>{label}</span>
+            </li>)}</ul>
+            {showPreview && <p className="mt-3 text-xs text-muted-foreground">{preview.pagesRead.length} صفحات مستعرضة{!preview.profile && " · القراءة العامة متاحة؛ لم يتوفر التفسير الآلي"}</p>}
+          </section>}
           {error && <p className="welcome-error" role="alert">{error}</p>}
           {showPreview && <SiteCard preview={preview} tab={findingTab} onTab={setFindingTab} />}
-          {normalizeBrandUrl(website) && !loading && <BrandScanProgress queuedWebsite={website} />}
-          <p className="welcome-disclaimer">هذه قراءة أولية لما يظهر علنًا، وقد تغيب معلومات عن صفحات محمية أو غير متاحة. الفحص الأعمق بعد التسجيل.</p>
+          <p className="welcome-disclaimer">نحلل المعلومات العامة من موقعك الآن، وقد لا تتوفر معلومات من الصفحات المحمية أو غير المتاحة.</p>
         </section>}
          {step === 2 && <section className="welcome-centered"><span className="welcome-eyebrow">فريقك</span><h1 className="welcome-title">سبعة موظفين إلى جانبك.</h1><p className="welcome-lead">فريق متكامل يعمل لأجل نمو مشروعك.</p><div className="welcome-team-grid">{team.map((m) => <div key={m.id} className="welcome-team-card"><Portrait memberId={m.id} name={m.name} className="welcome-team-photo" /><div className="min-w-0 flex-1 text-start"><strong className="block font-display text-lg">{m.name}</strong><span className="block text-xs text-muted-foreground">{m.role}</span><p className="mt-1.5 line-clamp-3 text-xs leading-relaxed">{purposeMembers[chosenPurpose][m.id]?.headline}</p><Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setExampleId(m.id)}>شاهد مثالًا</Button></div></div>)}</div></section>}
           {step === 3 && <section className="welcome-centered"><span className="welcome-eyebrow"><Search className="size-4" /> {chosenPurpose === "personal" ? "اهتمامك" : "مجالك"}</span><h1 className="welcome-title">{copy.industry}</h1><p className="welcome-lead">{copy.industryLead}</p><div className="welcome-industries">{industries.map((item) => <Button key={item} type="button" variant="outline" aria-pressed={item === "أخرى" ? customIndustry : !customIndustry && industry === item} onClick={() => { if (item === "أخرى") { setOtherSelected(true); setIndustry("أخرى"); } else { setOtherSelected(false); setIndustry(item); next(); } }} className={cn("welcome-industry", (item === "أخرى" ? customIndustry : !customIndustry && industry === item) && "welcome-industry-active")}>{item}{(item === "أخرى" ? customIndustry : !customIndustry && industry === item) && <Check className="size-4 shrink-0" />}</Button>)}</div>{customIndustry && <label className="welcome-custom-label" htmlFor="welcome-custom-industry">{chosenPurpose === "personal" ? "ما اهتمامك تحديدًا؟" : "ما مجالك تحديدًا؟"}<input id="welcome-custom-industry" className="welcome-input" autoFocus value={industry === "أخرى" ? "" : industry} onChange={(e) => setIndustry(e.target.value.slice(0, 60) || "أخرى")} maxLength={60} placeholder="مثال: استشارات هندسية" />{industry !== "أخرى" && industry.trim() && !industryValid && <span className="welcome-error">اكتب مجالًا من حرفين إلى 60 حرفًا، دون رموز خاصة.</span>}</label>}</section>}
@@ -164,7 +167,7 @@ function Welcome() {
          {step === 5 && <section className="welcome-centered"><span className="welcome-eyebrow"><Check className="size-4" /> البداية الحقيقية</span><h1 className="welcome-title">{copy.finish}</h1><p className="welcome-lead">{copy.finishLead}</p><div className="welcome-team">{team.map((person) => <div key={person.id}><Portrait memberId={person.id} name={person.name} className="size-9 rounded-full" /><span>{person.name}</span></div>)}</div><Button asChild className="welcome-signup"><Link to="/auth" search={{ mode: "signup", plan }}>أنشئ حسابك وقابل فريقك <ArrowLeft /></Link></Button><p className="welcome-trust"><ShieldCheck className="size-4" /> لن يُنشر أو يُرسل شيء دون موافقتك</p></section>}
       </div>
        {exampleMember && exampleCopy && <div className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-4" role="dialog" aria-modal="true" aria-label={`مثال من ${exampleMember.name}`} onClick={() => setExampleId(null)}><div className="w-full max-w-md rounded-3xl border border-border bg-card p-5 shadow-xl" onClick={(e) => e.stopPropagation()}><div className="flex items-center gap-3"><Portrait memberId={exampleMember.id} name={exampleMember.name} className="size-11 rounded-xl" /><div className="min-w-0 flex-1"><strong className="block">{exampleMember.name}</strong><span className="text-xs text-muted-foreground">{exampleMember.role}</span></div><Button type="button" variant="ghost" size="icon" aria-label="إغلاق" onClick={() => setExampleId(null)}><X /></Button></div><span className="mt-4 block text-xs font-bold text-primary">مثال عملي</span><p className="mt-1 whitespace-pre-line text-sm leading-relaxed">{exampleCopy.example}</p><ul className="mt-3 space-y-1.5">{exampleCopy.tasks.map((t) => <li key={t} className="flex gap-2 text-xs"><Check className="size-4 shrink-0 text-jade" />{t}</li>)}</ul></div></div>}
-       <footer className="welcome-footer"><Button type="button" variant="ghost" disabled={step === 0} onClick={back} className="welcome-back"><ArrowRight /> السابق</Button><span className="welcome-footer-dots" aria-hidden="true">{Array.from({ length: 6 }, (_, i) => <span key={i} className={i === step ? "is-active" : ""} />)}</span>{step < lastStep ? <Button type="button" disabled={!canContinue || loading || (step === 4 && recommendationState === "loading")} onClick={() => { if (step === 1 && website.trim() && !showPreview && !error) { void scan().then((ok) => { if (ok) next(); }); return; } next(); }} className="welcome-next">متابعة <ArrowLeft /></Button> : <span className="welcome-footer-spacer" />}</footer>
+       <footer className="welcome-footer"><Button type="button" variant="ghost" disabled={step === 0 || loading} onClick={back} className="welcome-back"><ArrowRight /> السابق</Button><span className="welcome-footer-dots" aria-hidden="true">{Array.from({ length: 6 }, (_, i) => <span key={i} className={i === step ? "is-active" : ""} />)}</span>{step < lastStep ? <Button type="button" disabled={!canContinue || loading || (step === 4 && recommendationState === "loading")} onClick={() => { if (step === 1 && website.trim() && !showPreview && !error) { void scan(); return; } next(); }} className="welcome-next">{step === 1 && error ? "متابعة دون تحليل" : "متابعة"} <ArrowLeft /></Button> : <span className="welcome-footer-spacer" />}</footer>
     </main>
   </div>;
 }

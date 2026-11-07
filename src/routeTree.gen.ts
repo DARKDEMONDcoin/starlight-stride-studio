@@ -87,6 +87,7 @@ import { Route as ApiPublicSocialAutopilotRouteImport } from './routes/api/publi
 import { Route as ApiPublicSocialQueueRouteImport } from './routes/api/public/social-queue'
 import { Route as ApiPublicTelegramNotifyRouteImport } from './routes/api/public/telegram-notify'
 import { Route as ApiPublicTrackRouteImport } from './routes/api/public/track'
+import { Route as ApiPublicWelcomeAnalysisRouteImport } from './routes/api/public/welcome-analysis'
 import { Route as AppAdsBaselineRouteImport } from './routes/app.ads.baseline'
 import { Route as AppAdsCampaignsRouteImport } from './routes/app.ads.campaigns'
 import { Route as AppAdsDraftsRouteImport } from './routes/app.ads.drafts'
@@ -496,6 +497,12 @@ const ApiPublicTrackRoute = ApiPublicTrackRouteImport.update({
   path: '/api/public/track',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWelcomeAnalysisRoute =
+  ApiPublicWelcomeAnalysisRouteImport.update({
+    id: '/api/public/welcome-analysis',
+    path: '/api/public/welcome-analysis',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppAdsBaselineRoute = AppAdsBaselineRouteImport.update({
   id: '/ads/baseline',
   path: '/ads/baseline',
@@ -648,6 +655,7 @@ export interface FileRoutesByFullPath {
   '/api/public/social-queue': typeof ApiPublicSocialQueueRoute
   '/api/public/telegram-notify': typeof ApiPublicTelegramNotifyRoute
   '/api/public/track': typeof ApiPublicTrackRoute
+  '/api/public/welcome-analysis': typeof ApiPublicWelcomeAnalysisRoute
   '/app/ads/baseline': typeof AppAdsBaselineRoute
   '/app/ads/campaigns': typeof AppAdsCampaignsRoute
   '/app/ads/drafts': typeof AppAdsDraftsRoute
@@ -740,6 +748,7 @@ export interface FileRoutesByTo {
   '/api/public/social-queue': typeof ApiPublicSocialQueueRoute
   '/api/public/telegram-notify': typeof ApiPublicTelegramNotifyRoute
   '/api/public/track': typeof ApiPublicTrackRoute
+  '/api/public/welcome-analysis': typeof ApiPublicWelcomeAnalysisRoute
   '/app/ads/baseline': typeof AppAdsBaselineRoute
   '/app/ads/campaigns': typeof AppAdsCampaignsRoute
   '/app/ads/drafts': typeof AppAdsDraftsRoute
@@ -835,6 +844,7 @@ export interface FileRoutesById {
   '/api/public/social-queue': typeof ApiPublicSocialQueueRoute
   '/api/public/telegram-notify': typeof ApiPublicTelegramNotifyRoute
   '/api/public/track': typeof ApiPublicTrackRoute
+  '/api/public/welcome-analysis': typeof ApiPublicWelcomeAnalysisRoute
   '/app/ads/baseline': typeof AppAdsBaselineRoute
   '/app/ads/campaigns': typeof AppAdsCampaignsRoute
   '/app/ads/drafts': typeof AppAdsDraftsRoute
@@ -931,6 +941,7 @@ export interface FileRouteTypes {
     | '/api/public/social-queue'
     | '/api/public/telegram-notify'
     | '/api/public/track'
+    | '/api/public/welcome-analysis'
     | '/app/ads/baseline'
     | '/app/ads/campaigns'
     | '/app/ads/drafts'
@@ -1023,6 +1034,7 @@ export interface FileRouteTypes {
     | '/api/public/social-queue'
     | '/api/public/telegram-notify'
     | '/api/public/track'
+    | '/api/public/welcome-analysis'
     | '/app/ads/baseline'
     | '/app/ads/campaigns'
     | '/app/ads/drafts'
@@ -1117,6 +1129,7 @@ export interface FileRouteTypes {
     | '/api/public/social-queue'
     | '/api/public/telegram-notify'
     | '/api/public/track'
+    | '/api/public/welcome-analysis'
     | '/app/ads/baseline'
     | '/app/ads/campaigns'
     | '/app/ads/drafts'
@@ -1184,6 +1197,7 @@ export interface RootRouteChildren {
   ApiPublicSocialQueueRoute: typeof ApiPublicSocialQueueRoute
   ApiPublicTelegramNotifyRoute: typeof ApiPublicTelegramNotifyRoute
   ApiPublicTrackRoute: typeof ApiPublicTrackRoute
+  ApiPublicWelcomeAnalysisRoute: typeof ApiPublicWelcomeAnalysisRoute
   ApiPublicMetaCallbackRoute: typeof ApiPublicMetaCallbackRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
@@ -1738,6 +1752,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTrackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/welcome-analysis': {
+      id: '/api/public/welcome-analysis'
+      path: '/api/public/welcome-analysis'
+      fullPath: '/api/public/welcome-analysis'
+      preLoaderRoute: typeof ApiPublicWelcomeAnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/ads/baseline': {
       id: '/app/ads/baseline'
       path: '/ads/baseline'
@@ -1983,6 +2004,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSocialQueueRoute: ApiPublicSocialQueueRoute,
   ApiPublicTelegramNotifyRoute: ApiPublicTelegramNotifyRoute,
   ApiPublicTrackRoute: ApiPublicTrackRoute,
+  ApiPublicWelcomeAnalysisRoute: ApiPublicWelcomeAnalysisRoute,
   ApiPublicMetaCallbackRoute: ApiPublicMetaCallbackRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
